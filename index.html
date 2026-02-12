@@ -3,19 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saidpur Village VR - Proximity Trigger</title>
+  <title>Saidpur Village VR - Laser Trigger</title>
   
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   
   <style>
     body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* These overlays only show on Desktop/Mobile flat screens. 
+       They disappear in VR mode, which is why we need 3D buttons too. */
     #ui-overlay {
       position: fixed; top: 20px; left: 20px; z-index: 1000;
       background: rgba(0, 0, 0, 0.7); color: white; padding: 15px 20px;
       border-radius: 10px; font-size: 14px; backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      pointer-events: none; /* Let clicks pass through to canvas */
     }
     #ui-overlay h3 { margin: 0 0 10px 0; font-size: 18px; color: #ffd700; }
+    
     #loading-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -23,47 +28,36 @@
       z-index: 2000; transition: opacity 0.5s ease;
     }
     #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    
     .loader {
       width: 50px; height: 50px; border: 5px solid rgba(255, 215, 0, 0.3);
       border-top: 5px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    #exit-video-btn {
-      position: fixed; top: 20px; right: 20px; z-index: 1001;
-      background: rgba(255, 0, 0, 0.8); color: white; border: none;
-      padding: 12px 24px; border-radius: 25px; cursor: pointer; display: none;
-    }
-    .click-instruction {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      z-index: 999; background: rgba(0, 0, 0, 0.8); color: white;
-      padding: 12px 24px; border-radius: 25px; animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
   </style>
 </head>
 
 <body>
   <div id="loading-screen">
     <div class="loader"></div>
-    <div class="loading-text" style="color: white; margin-top: 20px;">Loading Golden Hour Experience...</div>
+    <div class="loading-text" style="color: white; margin-top: 20px;">Loading VR Experience...</div>
   </div>
 
   <div id="ui-overlay">
     <h3>🏛️ Saidpur Village VR</h3>
     <p><strong>Controls:</strong></p>
-    <p>🖱️ Desktop: WASD to move</p>
-    <p>🏃 Walk closer to yellow spheres to enter</p>
+    <p>🖱️ Point and Click/Trigger on Yellow Spheres</p>
   </div>
 
-  <button id="exit-video-btn" onclick="exitVideoMode()">← Exit Video Mode</button>
-  <div class="click-instruction" id="click-instruction">Walk towards hotspots</div>
-
   <a-scene renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;" 
-           fog="type: exponential; color: #ff9d6e; density: 0.008;">
+           fog="type: exponential; color: #ff9d6e; density: 0.008;"
+           cursor="rayOrigin: mouse"
+           raycaster="objects: .clickable">
     
     <a-assets>
-      <video id="entrance-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
-      <video id="mosque-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
+      <video id="entrance-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="auto" crossorigin="anonymous" playsinline loop></video>
+      <video id="mosque-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="auto" crossorigin="anonymous" playsinline loop></video>
+      
       <img id="sky-tex" src="https://cdn.polyhaven.com/asset_img/primary/sunset_in_the_chalk_quarry.png" crossorigin="anonymous">
       <img id="hills-tex" src="https://cdn.polyhaven.com/asset_img/primary/aerial_rocks_02.png?height=780" crossorigin="anonymous">
       <img id="ground-tex" src="https://cdn.polyhaven.com/asset_img/primary/brown_mud_leaves_01.png?height=780" crossorigin="anonymous">
@@ -85,8 +79,8 @@
 
         <a-entity position="8 0 0">
           <a-plane rotation="-90 0 0" width="6" height="60" position="0 0.02 -10" 
-                  material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;" 
-                  animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
+                   material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;" 
+                   animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
           </a-plane>
           <a-box position="-3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
           <a-box position="3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
@@ -112,136 +106,107 @@
 
         <a-entity id="hotspots">
           <a-entity id="entrance-hotspot" position="0 1.5 2" 
-                    class="proximity-trigger"
+                    class="clickable hotspot"
                     data-video="entrance-video"
-                    geometry="primitive: sphere; radius: 0.5"
+                    geometry="primitive: sphere; radius: 0.6"
                     material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
-                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true">
-              <a-text value="Walk Here" align="center" position="0 0.7 0" width="4"></a-text>
+                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true"
+                    event-set__mouseenter="_event: mouseenter; material.opacity: 1; material.emissiveIntensity: 1"
+                    event-set__mouseleave="_event: mouseleave; material.opacity: 0.6; material.emissiveIntensity: 0.5">
+              <a-text value="CLICK TO ENTER" align="center" position="0 0.9 0" width="4" color="#FFF" look-at="#main-camera"></a-text>
           </a-entity>
 
           <a-entity id="mosque-hotspot" position="0 1.5 -20" 
-                    class="proximity-trigger"
+                    class="clickable hotspot"
                     data-video="mosque-video"
-                    geometry="primitive: sphere; radius: 0.5"
+                    geometry="primitive: sphere; radius: 0.6"
                     material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
-                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true">
-              <a-text value="Village Center" align="center" position="0 0.7 0" width="4"></a-text>
+                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true"
+                    event-set__mouseenter="_event: mouseenter; material.opacity: 1; material.emissiveIntensity: 1"
+                    event-set__mouseleave="_event: mouseleave; material.opacity: 0.6; material.emissiveIntensity: 0.5">
+              <a-text value="CLICK TO ENTER" align="center" position="0 0.9 0" width="4" color="#FFF" look-at="#main-camera"></a-text>
           </a-entity>
         </a-entity>
     </a-entity>
 
-    <a-videosphere id="video-display" radius="50" rotation="0 -90 0" visible="false"></a-videosphere>
+    <a-entity id="video-mode-group" visible="false">
+        <a-videosphere id="video-display" radius="50" rotation="0 -90 0"></a-videosphere>
+        
+        <a-entity id="vr-exit-btn" 
+                  class="clickable"
+                  position="0 1.6 -2" 
+                  geometry="primitive: plane; width: 1.5; height: 0.5"
+                  material="color: #cc0000; shader: flat; opacity: 0.8"
+                  text="value: EXIT VIDEO; align: center; width: 6; color: white;">
+             <a-plane position="0 0 -0.01" width="1.6" height="0.6" color="black" opacity="0.5"></a-plane>
+        </a-entity>
+    </a-entity>
 
     <a-entity id="camera-rig" position="0 0 5">
       <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+      
+      <a-entity id="left-hand" 
+                laser-controls="hand: left" 
+                raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
+      </a-entity>
+      
+      <a-entity id="right-hand" 
+                laser-controls="hand: right" 
+                raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
+      </a-entity>
     </a-entity>
 
   </a-scene>
 
   <script>
-    let isVideoMode = false;
-    const videoSphere = document.querySelector('#video-display');
     const environmentWorld = document.querySelector('#environment-world');
-    const cameraRig = document.querySelector('#camera-rig');
-    const exitBtn = document.querySelector('#exit-video-btn');
-    const uiOverlay = document.querySelector('#ui-overlay');
-    const instructions = document.querySelector('#click-instruction');
-    const mainCamera = document.querySelector('#main-camera');
-
-    // CONFIG: How close to trigger? (2.5 meters ~ 3 steps)
-    const TRIGGER_DISTANCE = 2.5; 
-
-    // Store position to calculate return vector
-    let lastHotspotPosition = null;
-
-    // --- MAIN LOOP: CHECKS DISTANCE EVERY FRAME (FIXED VERSION) ---
-    AFRAME.registerComponent('proximity-checker', {
-      tick: function () {
-        if (isVideoMode) return; // Don't check if already watching video
-
-        // Get world position of the player
-        const playerWorldPos = new THREE.Vector3();
-        cameraRig.object3D.getWorldPosition(playerWorldPos);
-
-        const hotspots = document.querySelectorAll('.proximity-trigger');
-
-        hotspots.forEach(hotspot => {
-          // Get world position of the hotspot
-          const hotspotWorldPos = new THREE.Vector3();
-          hotspot.object3D.getWorldPosition(hotspotWorldPos);
-          
-          // Calculate distance
-          const distance = playerWorldPos.distanceTo(hotspotWorldPos);
-
-          // Debug: Show distances in console (you can remove this later)
-          // console.log(`Distance to ${hotspot.id}: ${distance.toFixed(2)}m`);
-
-          if (distance < TRIGGER_DISTANCE) {
-             const videoId = hotspot.getAttribute('data-video');
-             lastHotspotPosition = hotspotWorldPos.clone(); // Remember where we triggered it
-             enterVideoMode(videoId);
-          }
+    const videoModeGroup = document.querySelector('#video-mode-group');
+    const videoSphere = document.querySelector('#video-display');
+    const vrExitBtn = document.querySelector('#vr-exit-btn');
+    const hotspots = document.querySelectorAll('.hotspot');
+    
+    // 1. SETUP HOTSPOT CLICKS
+    hotspots.forEach(hotspot => {
+        hotspot.addEventListener('click', function() {
+            const videoId = this.getAttribute('data-video');
+            enterVideoMode(videoId);
         });
-      }
     });
 
-    // Attach the checker to the scene
-    document.querySelector('a-scene').setAttribute('proximity-checker', '');
-
+    // 2. SETUP EXIT BUTTON CLICK
+    vrExitBtn.addEventListener('click', function() {
+        exitVideoMode();
+    });
 
     function enterVideoMode(videoId) {
-      if(isVideoMode) return;
-      
-      console.log("Entering video mode for: " + videoId);
-      isVideoMode = true;
+        console.log("Entering video mode: " + videoId);
+        
+        // Pause environment, play video
+        const video = document.getElementById(videoId);
+        video.currentTime = 0; 
+        video.play();
+        
+        // Swap visibility
+        videoSphere.setAttribute('src', '#' + videoId);
+        environmentWorld.setAttribute('visible', 'false');
+        videoModeGroup.setAttribute('visible', 'true');
 
-      const video = document.getElementById(videoId);
-      video.currentTime = 0; 
-      video.play();
-
-      videoSphere.setAttribute('src', '#' + videoId);
-      videoSphere.setAttribute('visible', 'true');
-      environmentWorld.setAttribute('visible', 'false');
-
-      // Center camera for video
-      cameraRig.setAttribute('position', '0 0 0'); 
-
-      exitBtn.style.display = 'block';
-      uiOverlay.style.display = 'none';
-      instructions.style.display = 'none';
+        // Note: In VR, we don't move the camera. We bring the video to them.
     }
 
     function exitVideoMode() {
-      isVideoMode = false;
-      const videos = document.querySelectorAll('video');
-      videos.forEach(v => { v.pause(); });
-      
-      videoSphere.setAttribute('visible', 'false');
-      environmentWorld.setAttribute('visible', 'true');
-      
-      // LOGIC: Don't put them back IN the hotspot, or it triggers again instantly.
-      // We move them 3 meters AWAY from the hotspot they just triggered.
-      if (lastHotspotPosition) {
-         // Create a safe spot: Start at hotspot
-         let safeZ = lastHotspotPosition.z + 3.5; // Move "back" (Positive Z)
-         
-         // If hotspot was very far back (like the mosque at -20), we move them to -16.5
-         // Simple logic: Just push them +3.5 Z from the hotspot center
-         cameraRig.setAttribute('position', {
-            x: lastHotspotPosition.x,
-            y: 0,
-            z: safeZ
-         });
-      } else {
-         cameraRig.setAttribute('position', '0 0 5');
-      }
-      
-      exitBtn.style.display = 'none';
-      uiOverlay.style.display = 'block';
-      instructions.style.display = 'block';
+        console.log("Exiting video mode");
+        
+        // Stop videos
+        const videos = document.querySelectorAll('video');
+        videos.forEach(v => { v.pause(); });
+        
+        // Swap visibility
+        videoModeGroup.setAttribute('visible', 'false');
+        environmentWorld.setAttribute('visible', 'true');
     }
 
+    // Loading screen logic
     document.querySelector('a-scene').addEventListener('loaded', () => {
       setTimeout(() => document.querySelector('#loading-screen').classList.add('hidden'), 1500);
     });
