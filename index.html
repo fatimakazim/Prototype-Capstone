@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saidpur Village VR - Touch Interaction</title>
+  <title>Saidpur Village VR - Proximity Trigger</title>
   
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   
   <style>
     body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -53,11 +52,11 @@
     <h3>🏛️ Saidpur Village VR</h3>
     <p><strong>Controls:</strong></p>
     <p>🖱️ Desktop: WASD to move</p>
-    <p>🏃 Walk INTO the yellow spheres to enter</p>
+    <p>🏃 Walk closer to yellow spheres to enter</p>
   </div>
 
   <button id="exit-video-btn" onclick="exitVideoMode()">← Exit Video Mode</button>
-  <div class="click-instruction" id="click-instruction">Walk into hotspots to explore</div>
+  <div class="click-instruction" id="click-instruction">Walk towards hotspots</div>
 
   <a-scene renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;" 
            fog="type: exponential; color: #ff9d6e; density: 0.008;">
@@ -113,7 +112,7 @@
 
         <a-entity id="hotspots">
           <a-entity id="entrance-hotspot" position="0 1.5 2" 
-                    class="hotspot-trigger"
+                    class="proximity-trigger"
                     data-video="entrance-video"
                     geometry="primitive: sphere; radius: 0.5"
                     material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
@@ -122,7 +121,7 @@
           </a-entity>
 
           <a-entity id="mosque-hotspot" position="0 1.5 -20" 
-                    class="hotspot-trigger"
+                    class="proximity-trigger"
                     data-video="mosque-video"
                     geometry="primitive: sphere; radius: 0.5"
                     material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
@@ -135,12 +134,7 @@
     <a-videosphere id="video-display" radius="50" rotation="0 -90 0" visible="false"></a-videosphere>
 
     <a-entity id="camera-rig" position="0 0 5">
-      <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0">
-        <a-entity aabb-collider="objects: .hotspot-trigger; interval: 100"
-                  geometry="primitive: box; width: 0.5; height: 1.6; depth: 0.5"
-                  visible="false"
-                  position="0 0 0"></a-entity>
-      </a-entity>
+      <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
     </a-entity>
 
   </a-scene>
@@ -153,56 +147,60 @@
     const exitBtn = document.querySelector('#exit-video-btn');
     const uiOverlay = document.querySelector('#ui-overlay');
     const instructions = document.querySelector('#click-instruction');
+    const mainCamera = document.querySelector('#main-camera');
 
-    let storedPosition = "0 0 5"; 
+    // CONFIG: How close to trigger? (2.5 meters ~ 3 steps)
+    const TRIGGER_DISTANCE = 2.5; 
 
-    // Handle Collision Events
-    document.querySelector('a-scene').addEventListener('hitstart', function(e) {
-      if (isVideoMode) return; // Don't trigger if already watching video
-      
-      // The event detail contains the element being hit
-      const hitElement = e.target; 
-      
-      // Hitting a hotspot from the camera's collider
-      // Hitting logic is sometimes on the camera entity or the object depending on config
-      // We look at the intersection details provided by aframe-extras
-      
-      // Simpler approach: Attach listener to the camera collider specifically
-    });
+    // Store position to calculate return vector
+    let lastHotspotPosition = null;
 
-    // We attach the event listener specifically to the collider entity inside the camera
-    const playerCollider = document.querySelector('[aabb-collider]');
-    
-    playerCollider.addEventListener('hitstart', (e) => {
-        if(isVideoMode) return;
+    // --- MAIN LOOP: CHECKS DISTANCE EVERY FRAME ---
+    AFRAME.registerComponent('proximity-checker', {
+      tick: function () {
+        if (isVideoMode) return; // Don't check if already watching video
 
-        // Check which object was hit
-        e.detail.intersectedEls.forEach(hitEl => {
-            if(hitEl.classList.contains('hotspot-trigger')) {
-                const videoId = hitEl.getAttribute('data-video');
-                if(videoId) {
-                    enterVideoMode(videoId);
-                }
-            }
+        const playerPos = cameraRig.object3D.position; // Get player position
+        const hotspots = document.querySelectorAll('.proximity-trigger');
+
+        hotspots.forEach(hotspot => {
+          const hotspotPos = hotspot.object3D.position;
+          
+          // Calculate distance
+          const distance = playerPos.distanceTo(hotspotPos);
+
+          if (distance < TRIGGER_DISTANCE) {
+             const videoId = hotspot.getAttribute('data-video');
+             lastHotspotPosition = hotspotPos.clone(); // Remember where we triggered it
+             enterVideoMode(videoId);
+          }
         });
+      }
     });
+
+    // Attach the checker to the scene
+    document.querySelector('a-scene').setAttribute('proximity-checker', '');
+
 
     function enterVideoMode(videoId) {
+      if(isVideoMode) return;
+      
+      console.log("Entering video mode for: " + videoId);
       isVideoMode = true;
-      console.log("Entering video: " + videoId);
+
       const video = document.getElementById(videoId);
       video.currentTime = 0; 
       video.play();
-      
-      storedPosition = cameraRig.getAttribute('position');
 
       videoSphere.setAttribute('src', '#' + videoId);
       videoSphere.setAttribute('visible', 'true');
       environmentWorld.setAttribute('visible', 'false');
 
-      // Move to center of sphere
+      // Center camera for video
       cameraRig.setAttribute('position', '0 0 0'); 
-      
+      // Reset rotation so they face forward in video (optional)
+      // mainCamera.setAttribute('rotation', '0 0 0');
+
       exitBtn.style.display = 'block';
       uiOverlay.style.display = 'none';
       instructions.style.display = 'none';
@@ -216,16 +214,23 @@
       videoSphere.setAttribute('visible', 'false');
       environmentWorld.setAttribute('visible', 'true');
       
-      // Move camera slightly BACK from the hotspot so we don't instantly re-trigger it
-      // We parse the stored position string to math it, or just offset Z slightly
-      // For simplicity here, we restore position. If it re-triggers instantly, walk back.
-      cameraRig.setAttribute('position', storedPosition);
+      // LOGIC: Don't put them back IN the hotspot, or it triggers again instantly.
+      // We move them 3 meters AWAY from the hotspot they just triggered.
+      if (lastHotspotPosition) {
+         // Create a safe spot: Start at hotspot
+         let safeZ = lastHotspotPosition.z + 3.5; // Move "back" (Positive Z)
+         
+         // If hotspot was very far back (like the mosque at -20), we move them to -16.5
+         // Simple logic: Just push them +3.5 Z from the hotspot center
+         cameraRig.setAttribute('position', {
+            x: lastHotspotPosition.x,
+            y: 0,
+            z: safeZ
+         });
+      } else {
+         cameraRig.setAttribute('position', '0 0 5');
+      }
       
-      // Small timeout to prevent instant re-triggering upon exit
-      setTimeout(() => { isVideoMode = false; }, 1000); 
-      // Force isVideoMode true for a second so the collider ignores the hit immediately after spawning back
-      isVideoMode = true; 
-
       exitBtn.style.display = 'none';
       uiOverlay.style.display = 'block';
       instructions.style.display = 'block';
