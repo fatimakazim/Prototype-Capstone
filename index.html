@@ -518,7 +518,7 @@
       
       <!-- Entrance teleport marker -->
       <a-entity 
-        class="teleport-marker"
+        class="teleport-marker clickable"
         position="0 0.05 0"
         teleport-target
         data-label="Village Entrance">
@@ -548,7 +548,7 @@
 
       <!-- Left House teleport marker -->
       <a-entity 
-        class="teleport-marker"
+        class="teleport-marker clickable"
         position="-10 0.05 -10"
         teleport-target
         data-label="Left House">
@@ -578,7 +578,7 @@
 
       <!-- Right House teleport marker -->
       <a-entity 
-        class="teleport-marker"
+        class="teleport-marker clickable"
         position="10 0.05 -12"
         teleport-target
         data-label="Right House">
@@ -608,7 +608,7 @@
 
       <!-- Mosque teleport marker -->
       <a-entity 
-        class="teleport-marker"
+        class="teleport-marker clickable"
         position="0 0.05 -17"
         teleport-target
         data-label="Historic Mosque">
@@ -638,7 +638,7 @@
 
       <!-- Village Center teleport marker -->
       <a-entity 
-        class="teleport-marker"
+        class="teleport-marker clickable"
         position="0 0.05 -10"
         teleport-target
         data-label="Village Center">
@@ -672,7 +672,7 @@
     <a-entity id="hotspots" visible="true">
       
       <!-- Main 360 Hotspot (Golden Glowing Sphere) -->
-      <a-entity class="hotspot" 
+      <a-entity class="hotspot clickable" 
                 position="0 1.6 -8" 
                 hotspot-component="videoId: entrance-video; audioId: entrance-audio; title: Village Entrance 360°; description: Experience the historic gateway in immersive 360°">
         
@@ -702,7 +702,7 @@
       </a-entity>
 
       <!-- Mosque 360 Hotspot -->
-      <a-entity class="hotspot" 
+      <a-entity class="hotspot clickable" 
                 position="0 2.5 -22" 
                 hotspot-component="videoId: mosque-video; audioId: mosque-audio; title: Historic Mosque 360°; description: Explore the beauty of this centuries-old mosque">
         
@@ -729,7 +729,7 @@
       </a-entity>
 
       <!-- Left House 360 Hotspot -->
-      <a-entity class="hotspot" 
+      <a-entity class="hotspot clickable" 
                 position="-10 2 -15" 
                 hotspot-component="videoId: market-video; audioId: market-audio; title: Traditional House 360°; description: Step inside a traditional village home">
         
@@ -756,7 +756,7 @@
       </a-entity>
 
       <!-- Right House 360 Hotspot -->
-      <a-entity class="hotspot" 
+      <a-entity class="hotspot clickable" 
                 position="10 2 -12" 
                 hotspot-component="videoId: temple-video; audioId: temple-audio; title: Village Home 360°; description: Discover traditional architecture and daily life">
         
@@ -800,7 +800,7 @@
           position="0 0 -1"
           geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015"
           material="color: #f39c12; shader: flat"
-          raycaster="objects: .teleport-marker, .hotspot; far: 20"
+          raycaster="objects: .clickable; far: 30"
           animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
           animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.5 0.5 0.5; dur: 500; easing: easeInCubic"
           animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150; easing: easeInCubic">
@@ -811,44 +811,34 @@
       <a-entity 
         id="left-hand"
         hand-tracking-controls="hand: left; modelColor: #f39c12"
-        hand-raycast="objects: .teleport-marker, .hotspot"
+        hand-interaction
         visible="false">
-        <!-- Visual ray for hand -->
-        <a-entity 
-          line="start: 0 0 0; end: 0 0 -5; color: #f39c12; opacity: 0.6"
-          visible="false"
-          class="hand-ray">
-        </a-entity>
       </a-entity>
 
       <!-- Right Hand VR Controller with Hand Tracking -->
       <a-entity 
         id="right-hand"
         hand-tracking-controls="hand: right; modelColor: #f39c12"
-        hand-raycast="objects: .teleport-marker, .hotspot"
+        hand-interaction
         visible="false">
-        <!-- Visual ray for hand -->
-        <a-entity 
-          line="start: 0 0 0; end: 0 0 -5; color: #f39c12; opacity: 0.6"
-          visible="false"
-          class="hand-ray">
-        </a-entity>
       </a-entity>
 
       <!-- Fallback VR Controllers (for headsets without hand tracking) -->
       <a-entity 
         id="left-controller"
         laser-controls="hand: left"
-        raycaster="objects: .teleport-marker, .hotspot; far: 20; showLine: true"
+        raycaster="objects: .clickable; far: 30; showLine: true"
         line="color: #f39c12; opacity: 0.75"
+        controller-interaction
         visible="false">
       </a-entity>
       
       <a-entity 
         id="right-controller"
         laser-controls="hand: right"
-        raycaster="objects: .teleport-marker, .hotspot; far: 20; showLine: true"
+        raycaster="objects: .clickable; far: 30; showLine: true"
         line="color: #f39c12; opacity: 0.75"
+        controller-interaction
         visible="false">
       </a-entity>
     </a-entity>
@@ -871,52 +861,56 @@
     let currentVideo = null;
     let isTeleporting = false;
 
-    // HAND TRACKING RAYCAST COMPONENT
-    AFRAME.registerComponent('hand-raycast', {
-      schema: {
-        objects: { type: 'string', default: '.clickable' }
-      },
-
+    // IMPROVED HAND INTERACTION COMPONENT
+    AFRAME.registerComponent('hand-interaction', {
       init: function () {
         const el = this.el;
-        const data = this.data;
         
         this.raycaster = new THREE.Raycaster();
         this.direction = new THREE.Vector3(0, 0, -1);
         this.isPinching = false;
-        this.lastPinchState = false;
         this.intersectedEl = null;
+        this.pinchCooldown = false;
         
-        // Get the hand ray visual
-        this.handRay = el.querySelector('.hand-ray');
-        
-        // Listen for pinch events
+        // Listen for pinch gestures
         el.addEventListener('pinchstarted', (evt) => {
+          if (this.pinchCooldown) return;
+          
           this.isPinching = true;
-          console.log('Pinch started');
-          if (this.handRay) this.handRay.setAttribute('visible', 'true');
+          console.log('✋ Pinch detected on', el.id);
           
           // Trigger click on intersected element
           if (this.intersectedEl) {
-            console.log('Clicking element:', this.intersectedEl);
+            console.log('🎯 Clicking:', this.intersectedEl.className);
+            
+            // Emit both click and mousedown for better compatibility
+            this.intersectedEl.emit('mousedown');
             this.intersectedEl.emit('click');
+            
+            // Add cooldown to prevent double-clicks
+            this.pinchCooldown = true;
+            setTimeout(() => {
+              this.pinchCooldown = false;
+            }, 500);
           }
         });
 
         el.addEventListener('pinchended', (evt) => {
           this.isPinching = false;
-          console.log('Pinch ended');
-          if (this.handRay) this.handRay.setAttribute('visible', 'false');
+          console.log('👋 Pinch released');
+          
+          if (this.intersectedEl) {
+            this.intersectedEl.emit('mouseup');
+          }
         });
       },
 
       tick: function () {
         const el = this.el;
-        const sceneEl = el.sceneEl;
         
         if (!el.object3D) return;
 
-        // Update raycaster
+        // Update raycaster from hand position
         const handPos = new THREE.Vector3();
         const handQuat = new THREE.Quaternion();
         el.object3D.getWorldPosition(handPos);
@@ -926,22 +920,31 @@
         direction.applyQuaternion(handQuat);
         
         this.raycaster.set(handPos, direction);
-        this.raycaster.far = 20;
+        this.raycaster.far = 30;
 
-        // Get all target objects
-        const targets = Array.from(document.querySelectorAll(this.data.objects))
-          .map(el => el.object3D)
-          .filter(obj => obj);
+        // Get all clickable objects
+        const clickables = Array.from(document.querySelectorAll('.clickable'));
+        const objects = clickables.map(el => el.object3D).filter(obj => obj);
+        
+        // Recursively get all children objects for better hit detection
+        const allObjects = [];
+        objects.forEach(obj => {
+          allObjects.push(obj);
+          obj.traverse(child => {
+            if (child !== obj) allObjects.push(child);
+          });
+        });
 
         // Check intersections
-        const intersects = this.raycaster.intersectObjects(targets, true);
+        const intersects = this.raycaster.intersectObjects(allObjects, false);
         
         // Find the closest interactive parent
         let newIntersectedEl = null;
         if (intersects.length > 0) {
           let obj = intersects[0].object;
+          // Walk up the tree to find the clickable element
           while (obj) {
-            if (obj.el && (obj.el.classList.contains('teleport-marker') || obj.el.classList.contains('hotspot'))) {
+            if (obj.el && obj.el.classList.contains('clickable')) {
               newIntersectedEl = obj.el;
               break;
             }
@@ -949,16 +952,34 @@
           }
         }
 
-        // Handle hover states
+        // Handle hover state changes
         if (newIntersectedEl !== this.intersectedEl) {
           if (this.intersectedEl) {
             this.intersectedEl.emit('mouseleave');
           }
           if (newIntersectedEl) {
             newIntersectedEl.emit('mouseenter');
+            console.log('👉 Hand hovering:', newIntersectedEl.className);
           }
           this.intersectedEl = newIntersectedEl;
         }
+      }
+    });
+
+    // CONTROLLER INTERACTION COMPONENT (for traditional VR controllers)
+    AFRAME.registerComponent('controller-interaction', {
+      init: function () {
+        const el = this.el;
+        
+        // Listen for trigger press
+        el.addEventListener('triggerdown', (evt) => {
+          const raycaster = el.components.raycaster;
+          if (raycaster && raycaster.intersectedEls.length > 0) {
+            const target = raycaster.intersectedEls[0];
+            console.log('🎮 Controller trigger:', target.className);
+            target.emit('click');
+          }
+        });
       }
     });
 
@@ -975,7 +996,7 @@
             const ring = el.querySelector('a-ring');
             if (cylinder) cylinder.setAttribute('material', 'opacity', '0.95');
             if (ring) ring.setAttribute('material', 'opacity', '1.0');
-            console.log('Hovering over:', label);
+            console.log('👀 Hovering teleport:', label);
           }
         });
 
@@ -990,7 +1011,15 @@
 
         // Click to teleport
         el.addEventListener('click', () => {
-          console.log('Teleport marker clicked:', label);
+          console.log('📍 Teleport clicked:', label);
+          if (!isVideoMode && !isTeleporting) {
+            teleportTo(el.object3D.position, label);
+          }
+        });
+
+        // Also handle mousedown for better VR compatibility
+        el.addEventListener('mousedown', () => {
+          console.log('📍 Teleport mousedown:', label);
           if (!isVideoMode && !isTeleporting) {
             teleportTo(el.object3D.position, label);
           }
@@ -1077,7 +1106,7 @@
             if (sphere) {
               sphere.setAttribute('scale', '1.2 1.2 1.2');
             }
-            console.log('Hovering over hotspot:', data.title);
+            console.log('👀 Hovering hotspot:', data.title);
           }
         });
 
@@ -1092,7 +1121,15 @@
 
         // Click to activate 360 video
         el.addEventListener('click', () => {
-          console.log('Hotspot clicked:', data.title);
+          console.log('🎥 Hotspot clicked:', data.title);
+          if (!isVideoMode && !isTeleporting) {
+            activateVideoMode(data.videoId, data.audioId, data.title, data.description);
+          }
+        });
+
+        // Also handle mousedown for better VR compatibility
+        el.addEventListener('mousedown', () => {
+          console.log('🎥 Hotspot mousedown:', data.title);
           if (!isVideoMode && !isTeleporting) {
             activateVideoMode(data.videoId, data.audioId, data.title, data.description);
           }
@@ -1285,7 +1322,7 @@
       const scene = document.querySelector('a-scene');
       
       scene.addEventListener('enter-vr', () => {
-        console.log('Entering VR mode');
+        console.log('🥽 Entering VR mode');
         
         // Hide desktop cursor
         const cursor = document.querySelector('#cursor');
@@ -1297,17 +1334,17 @@
         if (leftHand) leftHand.setAttribute('visible', 'true');
         if (rightHand) rightHand.setAttribute('visible', 'true');
         
-        // Show fallback controllers (they auto-hide if hand tracking is available)
+        // Show fallback controllers
         const leftController = document.querySelector('#left-controller');
         const rightController = document.querySelector('#right-controller');
         if (leftController) leftController.setAttribute('visible', 'true');
         if (rightController) rightController.setAttribute('visible', 'true');
         
-        console.log('VR hands and controllers enabled');
+        console.log('✅ VR interactions enabled');
       });
 
       scene.addEventListener('exit-vr', () => {
-        console.log('Exiting VR mode');
+        console.log('👋 Exiting VR mode');
         
         // Show desktop cursor
         const cursor = document.querySelector('#cursor');
