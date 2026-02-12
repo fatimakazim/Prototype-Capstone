@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saidpur Village VR - Golden Hour Interactive</title>
+  <title>Saidpur Village VR - Touch Interaction</title>
   
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
@@ -52,12 +52,12 @@
   <div id="ui-overlay">
     <h3>🏛️ Saidpur Village VR</h3>
     <p><strong>Controls:</strong></p>
-    <p>🖱️ Desktop: WASD to move, Mouse to look</p>
-    <p>👆 Click spheres to view 360° videos</p>
+    <p>🖱️ Desktop: WASD to move</p>
+    <p>🏃 Walk INTO the yellow spheres to enter</p>
   </div>
 
   <button id="exit-video-btn" onclick="exitVideoMode()">← Exit Video Mode</button>
-  <div class="click-instruction" id="click-instruction">Click hotspots to explore</div>
+  <div class="click-instruction" id="click-instruction">Walk into hotspots to explore</div>
 
   <a-scene renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;" 
            fog="type: exponential; color: #ff9d6e; density: 0.008;">
@@ -65,9 +65,6 @@
     <a-assets>
       <video id="entrance-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
       <video id="mosque-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
-      <video id="market-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
-      <video id="temple-video" src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" preload="metadata" crossorigin="anonymous" playsinline loop></video>
-      
       <img id="sky-tex" src="https://cdn.polyhaven.com/asset_img/primary/sunset_in_the_chalk_quarry.png" crossorigin="anonymous">
       <img id="hills-tex" src="https://cdn.polyhaven.com/asset_img/primary/aerial_rocks_02.png?height=780" crossorigin="anonymous">
       <img id="ground-tex" src="https://cdn.polyhaven.com/asset_img/primary/brown_mud_leaves_01.png?height=780" crossorigin="anonymous">
@@ -88,53 +85,61 @@
         <a-plane rotation="-90 0 0" width="4" height="50" position="0 0.03 -10" material="src: #cobble-tex; repeat: 4 30; color: #dcb;"></a-plane>
 
         <a-entity position="8 0 0">
-        <a-plane rotation="-90 0 0" width="6" height="60" position="0 0.02 -10" 
-                material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;" 
-                animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
-        </a-plane>
-        <a-box position="-3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
-        <a-box position="3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
+          <a-plane rotation="-90 0 0" width="6" height="60" position="0 0.02 -10" 
+                  material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;" 
+                  animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
+          </a-plane>
+          <a-box position="-3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
+          <a-box position="3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
         </a-entity>
 
         <a-entity position="-12 0 -15" rotation="0 25 0">
-        <a-box position="0 2 0" width="8" height="4" depth="6" material="src: #brick-tex; repeat: 4 2; color: #d86;"></a-box>
-        <a-cone position="0 5 0" radius-bottom="5.5" height="2.5" segments-radial="4" rotation="0 45 0" material="src: #stone-tex; color: #4e342e;"></a-cone>
-        <a-entity position="0 2.5 3.05">
-            <a-box width="1.5" height="2.2" depth="0.1" material="color: #2b1d12;"></a-box>
-            <a-box width="1.3" height="2" depth="0.15" material="color: #ffd700; transparent: true; opacity: 0.3;"></a-box>
-        </a-entity>
+          <a-box position="0 2 0" width="8" height="4" depth="6" material="src: #brick-tex; repeat: 4 2; color: #d86;"></a-box>
+          <a-cone position="0 5 0" radius-bottom="5.5" height="2.5" segments-radial="4" rotation="0 45 0" material="src: #stone-tex; color: #4e342e;"></a-cone>
+          <a-entity position="0 2.5 3.05">
+              <a-box width="1.5" height="2.2" depth="0.1" material="color: #2b1d12;"></a-box>
+              <a-box width="1.3" height="2" depth="0.15" material="color: #ffd700; transparent: true; opacity: 0.3;"></a-box>
+          </a-entity>
         </a-entity>
 
         <a-entity position="0 0 -25">
-        <a-box position="0 3.5 0" width="9" height="7" depth="9" material="src: #brick-tex; repeat: 8 5; color: #f5deb3;"></a-box>
-        <a-sphere position="0 7 0" radius="4" theta-length="90" material="color: #fcfcfc; roughness: 0.2;"></a-sphere>
-        <a-entity position="0 2 -4.55">
-            <a-box width="2" height="3.5" depth="0.1" material="color: #3b2b1a;"></a-box>
-            <a-box width="1.6" height="3.2" depth="0.15" material="color: #ffd700; opacity: 0.4;"></a-box>
-        </a-entity>
+          <a-box position="0 3.5 0" width="9" height="7" depth="9" material="src: #brick-tex; repeat: 8 5; color: #f5deb3;"></a-box>
+          <a-sphere position="0 7 0" radius="4" theta-length="90" material="color: #fcfcfc; roughness: 0.2;"></a-sphere>
+          <a-entity position="0 2 -4.55">
+              <a-box width="2" height="3.5" depth="0.1" material="color: #3b2b1a;"></a-box>
+              <a-box width="1.6" height="3.2" depth="0.15" material="color: #ffd700; opacity: 0.4;"></a-box>
+          </a-entity>
         </a-entity>
 
         <a-entity id="hotspots">
-        <a-entity id="entrance-hotspot" position="0 1.5 2" class="clickable"
-                    onclick="enterVideoMode('entrance-video')"
-                    geometry="primitive: sphere; radius: 0.4"
-                    material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5">
-            <a-text value="Entrance" align="center" position="0 0.7 0" width="4"></a-text>
-        </a-entity>
+          <a-entity id="entrance-hotspot" position="0 1.5 2" 
+                    class="hotspot-trigger"
+                    data-video="entrance-video"
+                    geometry="primitive: sphere; radius: 0.5"
+                    material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
+                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true">
+              <a-text value="Walk Here" align="center" position="0 0.7 0" width="4"></a-text>
+          </a-entity>
 
-        <a-entity id="mosque-hotspot" position="0 1.5 -20" class="clickable"
-                    onclick="enterVideoMode('mosque-video')"
-                    geometry="primitive: sphere; radius: 0.4"
-                    material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5">
-            <a-text value="Village Center" align="center" position="0 0.7 0" width="4"></a-text>
-        </a-entity>
+          <a-entity id="mosque-hotspot" position="0 1.5 -20" 
+                    class="hotspot-trigger"
+                    data-video="mosque-video"
+                    geometry="primitive: sphere; radius: 0.5"
+                    material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5; transparent: true; opacity: 0.6"
+                    animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dir: alternate; dur: 1000; loop: true">
+              <a-text value="Village Center" align="center" position="0 0.7 0" width="4"></a-text>
+          </a-entity>
         </a-entity>
     </a-entity>
+
     <a-videosphere id="video-display" radius="50" rotation="0 -90 0" visible="false"></a-videosphere>
 
     <a-entity id="camera-rig" position="0 0 5">
       <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0">
-        <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+        <a-entity aabb-collider="objects: .hotspot-trigger; interval: 100"
+                  geometry="primitive: box; width: 0.5; height: 1.6; depth: 0.5"
+                  visible="false"
+                  position="0 0 0"></a-entity>
       </a-entity>
     </a-entity>
 
@@ -151,8 +156,40 @@
 
     let storedPosition = "0 0 5"; 
 
+    // Handle Collision Events
+    document.querySelector('a-scene').addEventListener('hitstart', function(e) {
+      if (isVideoMode) return; // Don't trigger if already watching video
+      
+      // The event detail contains the element being hit
+      const hitElement = e.target; 
+      
+      // Hitting a hotspot from the camera's collider
+      // Hitting logic is sometimes on the camera entity or the object depending on config
+      // We look at the intersection details provided by aframe-extras
+      
+      // Simpler approach: Attach listener to the camera collider specifically
+    });
+
+    // We attach the event listener specifically to the collider entity inside the camera
+    const playerCollider = document.querySelector('[aabb-collider]');
+    
+    playerCollider.addEventListener('hitstart', (e) => {
+        if(isVideoMode) return;
+
+        // Check which object was hit
+        e.detail.intersectedEls.forEach(hitEl => {
+            if(hitEl.classList.contains('hotspot-trigger')) {
+                const videoId = hitEl.getAttribute('data-video');
+                if(videoId) {
+                    enterVideoMode(videoId);
+                }
+            }
+        });
+    });
+
     function enterVideoMode(videoId) {
       isVideoMode = true;
+      console.log("Entering video: " + videoId);
       const video = document.getElementById(videoId);
       video.currentTime = 0; 
       video.play();
@@ -163,6 +200,7 @@
       videoSphere.setAttribute('visible', 'true');
       environmentWorld.setAttribute('visible', 'false');
 
+      // Move to center of sphere
       cameraRig.setAttribute('position', '0 0 0'); 
       
       exitBtn.style.display = 'block';
@@ -177,8 +215,17 @@
       
       videoSphere.setAttribute('visible', 'false');
       environmentWorld.setAttribute('visible', 'true');
+      
+      // Move camera slightly BACK from the hotspot so we don't instantly re-trigger it
+      // We parse the stored position string to math it, or just offset Z slightly
+      // For simplicity here, we restore position. If it re-triggers instantly, walk back.
       cameraRig.setAttribute('position', storedPosition);
       
+      // Small timeout to prevent instant re-triggering upon exit
+      setTimeout(() => { isVideoMode = false; }, 1000); 
+      // Force isVideoMode true for a second so the collider ignores the hit immediately after spawning back
+      isVideoMode = true; 
+
       exitBtn.style.display = 'none';
       uiOverlay.style.display = 'block';
       instructions.style.display = 'block';
