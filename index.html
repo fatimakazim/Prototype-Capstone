@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saidpur Village VR - Ultimate Edition</title>
+  <title>Saidpur Village VR - Ultimate Edition with Navigation</title>
   
   <!-- A-Frame Core -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -108,6 +108,7 @@
       text-transform: uppercase;
       box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
       transition: all 0.3s ease;
+      pointer-events: auto;
     }
 
     #exit-video-btn:hover {
@@ -133,6 +134,136 @@
       0%, 100% { opacity: 0.7; }
       50% { opacity: 1; }
     }
+
+    /* NAVIGATION CONTROLS */
+    #navigation-controls {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      display: grid;
+      grid-template-columns: repeat(3, 70px);
+      grid-template-rows: repeat(3, 70px);
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 0.9) 0%, rgba(230, 126, 34, 0.9) 100%);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      user-select: none;
+      -webkit-user-select: none;
+      font-weight: bold;
+    }
+
+    .nav-btn:hover {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 1) 0%, rgba(230, 126, 34, 1) 100%);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(243, 156, 18, 0.5);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-btn.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    #btn-up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #btn-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #btn-right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    #btn-down {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .nav-label {
+      position: fixed;
+      bottom: 250px;
+      right: 30px;
+      z-index: 999;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    /* Proximity indicator */
+    #proximity-indicator {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(46, 204, 113, 0.9);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      display: none;
+      animation: pulse 1.5s infinite;
+      box-shadow: 0 4px 20px rgba(46, 204, 113, 0.4);
+      pointer-events: none;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      #navigation-controls {
+        bottom: 20px;
+        right: 20px;
+        grid-template-columns: repeat(3, 60px);
+        grid-template-rows: repeat(3, 60px);
+        gap: 6px;
+      }
+
+      .nav-btn {
+        font-size: 24px;
+      }
+
+      .nav-label {
+        bottom: 220px;
+        right: 20px;
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+    }
+
+    /* VR mode - hide 2D controls */
+    .a-enter-vr .nav-controls-2d {
+      display: none;
+    }
   </style>
 </head>
 
@@ -147,8 +278,28 @@
   <div id="ui-overlay">
     <h2>🏛️ Saidpur Village VR</h2>
     <p>Margalla Hills Foothills</p>
-    <p>🎯 Click teleport markers to move</p>
-    <p>👆 Click golden sphere for 360° video</p>
+    <p>🎯 Use arrow buttons to navigate</p>
+    <p>👆 Walk near golden spheres to trigger 360° videos</p>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="nav-controls-2d">
+    <div class="nav-label">
+      🎮 Navigation Controls<br>
+      <small>Walk within 2m of hotspots</small>
+    </div>
+    
+    <div id="navigation-controls">
+      <button id="btn-up" class="nav-btn" title="Move Forward">▲</button>
+      <button id="btn-left" class="nav-btn" title="Move Left">◄</button>
+      <button id="btn-right" class="nav-btn" title="Move Right">►</button>
+      <button id="btn-down" class="nav-btn" title="Move Backward">▼</button>
+    </div>
+
+    <!-- Proximity Indicator -->
+    <div id="proximity-indicator">
+      🎬 Hotspot Nearby - Keep Walking!
+    </div>
   </div>
 
   <!-- Exit Video Button -->
@@ -156,7 +307,7 @@
 
   <!-- Click Instruction -->
   <div class="click-instruction" id="click-instruction">
-    Click glowing markers to teleport around the village
+    Use navigation buttons to explore the village
   </div>
 
   <a-scene 
@@ -668,13 +819,13 @@
 
     </a-entity>
 
-    <!-- HOTSPOTS for 360° Videos - GOLDEN SPHERES -->
+    <!-- HOTSPOTS for 360° Videos - GOLDEN SPHERES with proximity detection -->
     <a-entity id="hotspots" visible="true">
       
       <!-- Main 360 Hotspot (Golden Glowing Sphere) -->
       <a-entity class="hotspot clickable" 
                 position="0 1.6 -8" 
-                hotspot-component="videoId: entrance-video; audioId: entrance-audio; title: Village Entrance 360°; description: Experience the historic gateway in immersive 360°">
+                hotspot-component="videoId: entrance-video; audioId: entrance-audio; title: Village Entrance 360°; description: Experience the historic gateway in immersive 360°; triggerDistance: 2.0">
         
         <!-- Glowing Core -->
         <a-sphere 
@@ -692,7 +843,7 @@
         </a-ring>
         
         <!-- Text Label -->
-        <a-text value="CLICK FOR&#10;360° VIDEO" 
+        <a-text value="VILLAGE&#10;ENTRANCE" 
                 align="center" 
                 position="0 0.9 0" 
                 width="5"
@@ -704,7 +855,7 @@
       <!-- Mosque 360 Hotspot -->
       <a-entity class="hotspot clickable" 
                 position="0 2.5 -22" 
-                hotspot-component="videoId: mosque-video; audioId: mosque-audio; title: Historic Mosque 360°; description: Explore the beauty of this centuries-old mosque">
+                hotspot-component="videoId: mosque-video; audioId: mosque-audio; title: Historic Mosque 360°; description: Explore the beauty of this centuries-old mosque; triggerDistance: 2.0">
         
         <a-sphere 
           radius="0.35" 
@@ -719,7 +870,7 @@
                 rotation="-90 0 0">
         </a-ring>
         
-        <a-text value="🕌 MOSQUE&#10;360° VIEW" 
+        <a-text value="HISTORIC&#10;MOSQUE" 
                 align="center" 
                 position="0 0.9 0" 
                 width="5"
@@ -731,7 +882,7 @@
       <!-- Left House 360 Hotspot -->
       <a-entity class="hotspot clickable" 
                 position="-10 2 -15" 
-                hotspot-component="videoId: market-video; audioId: market-audio; title: Traditional House 360°; description: Step inside a traditional village home">
+                hotspot-component="videoId: market-video; audioId: market-audio; title: Traditional House 360°; description: Step inside a traditional village home; triggerDistance: 2.0">
         
         <a-sphere 
           radius="0.35" 
@@ -746,7 +897,7 @@
                 rotation="-90 0 0">
         </a-ring>
         
-        <a-text value="🏠 HOUSE&#10;360° VIEW" 
+        <a-text value="TRADITIONAL&#10;HOUSE" 
                 align="center" 
                 position="0 0.9 0" 
                 width="5"
@@ -758,7 +909,7 @@
       <!-- Right House 360 Hotspot -->
       <a-entity class="hotspot clickable" 
                 position="10 2 -12" 
-                hotspot-component="videoId: temple-video; audioId: temple-audio; title: Village Home 360°; description: Discover traditional architecture and daily life">
+                hotspot-component="videoId: temple-video; audioId: temple-audio; title: Village Home 360°; description: Discover traditional architecture and daily life; triggerDistance: 2.0">
         
         <a-sphere 
           radius="0.35" 
@@ -773,7 +924,7 @@
                 rotation="-90 0 0">
         </a-ring>
         
-        <a-text value="🏠 HOME&#10;360° VIEW" 
+        <a-text value="VILLAGE&#10;HOME" 
                 align="center" 
                 position="0 0.9 0" 
                 width="5"
@@ -784,8 +935,59 @@
 
     </a-entity>
 
+    <!-- VR NAVIGATION BUTTONS (Floating in 3D space for VR mode) -->
+    <a-entity id="vr-nav-controls" visible="false">
+      <!-- Up button -->
+      <a-box 
+        id="vr-btn-up"
+        class="vr-nav-btn clickable"
+        position="0 -0.3 -1.5"
+        width="0.15" height="0.15" depth="0.05"
+        color="#f39c12"
+        data-direction="forward"
+        vr-nav-button>
+        <a-text value="▲" align="center" position="0 0 0.03" width="0.5" color="#ffffff"></a-text>
+      </a-box>
+      
+      <!-- Down button -->
+      <a-box 
+        id="vr-btn-down"
+        class="vr-nav-btn clickable"
+        position="0 -0.6 -1.5"
+        width="0.15" height="0.15" depth="0.05"
+        color="#f39c12"
+        data-direction="backward"
+        vr-nav-button>
+        <a-text value="▼" align="center" position="0 0 0.03" width="0.5" color="#ffffff"></a-text>
+      </a-box>
+      
+      <!-- Left button -->
+      <a-box 
+        id="vr-btn-left"
+        class="vr-nav-btn clickable"
+        position="-0.15 -0.45 -1.5"
+        width="0.15" height="0.15" depth="0.05"
+        color="#f39c12"
+        data-direction="left"
+        vr-nav-button>
+        <a-text value="◄" align="center" position="0 0 0.03" width="0.5" color="#ffffff"></a-text>
+      </a-box>
+      
+      <!-- Right button -->
+      <a-box 
+        id="vr-btn-right"
+        class="vr-nav-btn clickable"
+        position="0.15 -0.45 -1.5"
+        width="0.15" height="0.15" depth="0.05"
+        color="#f39c12"
+        data-direction="right"
+        vr-nav-button>
+        <a-text value="►" align="center" position="0 0 0.03" width="0.5" color="#ffffff"></a-text>
+      </a-box>
+    </a-entity>
+
     <!-- Camera Rig with VR hand tracking -->
-    <a-entity id="camera-rig" position="0 0 5">
+    <a-entity id="camera-rig" position="0 0 5" camera-movement-controller>
       <a-entity 
         id="camera"
         camera 
@@ -805,6 +1007,10 @@
           animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.5 0.5 0.5; dur: 500; easing: easeInCubic"
           animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150; easing: easeInCubic">
         </a-entity>
+      </a-entity>
+
+      <!-- Attach VR nav buttons to camera for VR mode -->
+      <a-entity id="vr-nav-attach" position="0 1.6 0">
       </a-entity>
 
       <!-- Left Hand VR Controller with Hand Tracking -->
@@ -855,13 +1061,104 @@
   </a-scene>
 
   <script>
-    // Global state management
+    // ===== GLOBAL STATE MANAGEMENT =====
     let isVideoMode = false;
     let currentAudio = null;
     let currentVideo = null;
     let isTeleporting = false;
+    let isMoving = false;
+    let moveSpeed = 0.15; // Units per frame
+    let triggeredHotspots = new Set(); // Track which hotspots have been triggered
 
-    // IMPROVED HAND INTERACTION COMPONENT
+    // ===== CAMERA MOVEMENT CONTROLLER =====
+    AFRAME.registerComponent('camera-movement-controller', {
+      init: function () {
+        this.moveDirection = null;
+        this.isMoving = false;
+      },
+
+      tick: function (time, timeDelta) {
+        if (!this.moveDirection || isVideoMode || isTeleporting) return;
+
+        const cameraRig = this.el;
+        const camera = document.querySelector('#camera');
+        const currentPos = cameraRig.getAttribute('position');
+        const cameraRotation = camera.object3D.rotation.y;
+
+        let newX = currentPos.x;
+        let newZ = currentPos.z;
+
+        switch (this.moveDirection) {
+          case 'forward':
+            // Move in the direction the camera is facing
+            newX -= Math.sin(cameraRotation) * moveSpeed;
+            newZ -= Math.cos(cameraRotation) * moveSpeed;
+            break;
+          case 'backward':
+            // Move opposite to camera direction
+            newX += Math.sin(cameraRotation) * moveSpeed;
+            newZ += Math.cos(cameraRotation) * moveSpeed;
+            break;
+          case 'left':
+            // Strafe left
+            newX -= Math.cos(cameraRotation) * moveSpeed;
+            newZ += Math.sin(cameraRotation) * moveSpeed;
+            break;
+          case 'right':
+            // Strafe right
+            newX += Math.cos(cameraRotation) * moveSpeed;
+            newZ -= Math.sin(cameraRotation) * moveSpeed;
+            break;
+        }
+
+        cameraRig.setAttribute('position', { x: newX, y: currentPos.y, z: newZ });
+      },
+
+      startMoving: function(direction) {
+        this.moveDirection = direction;
+        this.isMoving = true;
+        isMoving = true;
+        console.log('🚶 Moving:', direction);
+      },
+
+      stopMoving: function() {
+        this.moveDirection = null;
+        this.isMoving = false;
+        isMoving = false;
+        console.log('🛑 Movement stopped');
+      }
+    });
+
+    // ===== VR NAVIGATION BUTTON COMPONENT =====
+    AFRAME.registerComponent('vr-nav-button', {
+      init: function () {
+        const el = this.el;
+        const direction = el.getAttribute('data-direction');
+
+        // Hover effect
+        el.addEventListener('mouseenter', () => {
+          el.setAttribute('scale', '1.2 1.2 1.2');
+        });
+
+        el.addEventListener('mouseleave', () => {
+          el.setAttribute('scale', '1 1 1');
+        });
+
+        // Click to move
+        el.addEventListener('click', () => {
+          const cameraRig = document.querySelector('#camera-rig');
+          const controller = cameraRig.components['camera-movement-controller'];
+          if (controller) {
+            controller.startMoving(direction);
+            setTimeout(() => {
+              controller.stopMoving();
+            }, 200); // Move for 200ms per click
+          }
+        });
+      }
+    });
+
+    // ===== IMPROVED HAND INTERACTION COMPONENT =====
     AFRAME.registerComponent('hand-interaction', {
       init: function () {
         const el = this.el;
@@ -883,11 +1180,9 @@
           if (this.intersectedEl) {
             console.log('🎯 Clicking:', this.intersectedEl.className);
             
-            // Emit both click and mousedown for better compatibility
             this.intersectedEl.emit('mousedown');
             this.intersectedEl.emit('click');
             
-            // Add cooldown to prevent double-clicks
             this.pinchCooldown = true;
             setTimeout(() => {
               this.pinchCooldown = false;
@@ -910,7 +1205,6 @@
         
         if (!el.object3D) return;
 
-        // Update raycaster from hand position
         const handPos = new THREE.Vector3();
         const handQuat = new THREE.Quaternion();
         el.object3D.getWorldPosition(handPos);
@@ -922,11 +1216,9 @@
         this.raycaster.set(handPos, direction);
         this.raycaster.far = 30;
 
-        // Get all clickable objects
         const clickables = Array.from(document.querySelectorAll('.clickable'));
         const objects = clickables.map(el => el.object3D).filter(obj => obj);
         
-        // Recursively get all children objects for better hit detection
         const allObjects = [];
         objects.forEach(obj => {
           allObjects.push(obj);
@@ -935,14 +1227,11 @@
           });
         });
 
-        // Check intersections
         const intersects = this.raycaster.intersectObjects(allObjects, false);
         
-        // Find the closest interactive parent
         let newIntersectedEl = null;
         if (intersects.length > 0) {
           let obj = intersects[0].object;
-          // Walk up the tree to find the clickable element
           while (obj) {
             if (obj.el && obj.el.classList.contains('clickable')) {
               newIntersectedEl = obj.el;
@@ -952,26 +1241,23 @@
           }
         }
 
-        // Handle hover state changes
         if (newIntersectedEl !== this.intersectedEl) {
           if (this.intersectedEl) {
             this.intersectedEl.emit('mouseleave');
           }
           if (newIntersectedEl) {
             newIntersectedEl.emit('mouseenter');
-            console.log('👉 Hand hovering:', newIntersectedEl.className);
           }
           this.intersectedEl = newIntersectedEl;
         }
       }
     });
 
-    // CONTROLLER INTERACTION COMPONENT (for traditional VR controllers)
+    // ===== CONTROLLER INTERACTION COMPONENT =====
     AFRAME.registerComponent('controller-interaction', {
       init: function () {
         const el = this.el;
         
-        // Listen for trigger press
         el.addEventListener('triggerdown', (evt) => {
           const raycaster = el.components.raycaster;
           if (raycaster && raycaster.intersectedEls.length > 0) {
@@ -983,20 +1269,18 @@
       }
     });
 
-    // Teleport Target Component
+    // ===== TELEPORT TARGET COMPONENT =====
     AFRAME.registerComponent('teleport-target', {
       init: function () {
         const el = this.el;
         const label = el.getAttribute('data-label') || 'Location';
 
-        // Hover effects
         el.addEventListener('mouseenter', () => {
           if (!isVideoMode && !isTeleporting) {
             const cylinder = el.querySelector('a-cylinder');
             const ring = el.querySelector('a-ring');
             if (cylinder) cylinder.setAttribute('material', 'opacity', '0.95');
             if (ring) ring.setAttribute('material', 'opacity', '1.0');
-            console.log('👀 Hovering teleport:', label);
           }
         });
 
@@ -1009,17 +1293,13 @@
           }
         });
 
-        // Click to teleport
         el.addEventListener('click', () => {
-          console.log('📍 Teleport clicked:', label);
           if (!isVideoMode && !isTeleporting) {
             teleportTo(el.object3D.position, label);
           }
         });
 
-        // Also handle mousedown for better VR compatibility
         el.addEventListener('mousedown', () => {
-          console.log('📍 Teleport mousedown:', label);
           if (!isVideoMode && !isTeleporting) {
             teleportTo(el.object3D.position, label);
           }
@@ -1027,7 +1307,7 @@
       }
     });
 
-    // Teleport function with smooth transition
+    // ===== TELEPORT FUNCTION =====
     function teleportTo(targetPosition, label) {
       if (isTeleporting) return;
       
@@ -1037,7 +1317,6 @@
       
       fadeOverlay.setAttribute('visible', 'true');
       
-      // Fade out
       fadeOverlay.setAttribute('animation__fadeout', {
         property: 'material.opacity',
         from: 0,
@@ -1046,7 +1325,6 @@
         easing: 'easeInQuad'
       });
 
-      // Move camera after fade out
       setTimeout(() => {
         const newPosition = {
           x: targetPosition.x,
@@ -1056,7 +1334,6 @@
         
         cameraRig.setAttribute('position', newPosition);
         
-        // Update UI with location
         const uiOverlay = document.querySelector('#ui-overlay');
         const originalHTML = uiOverlay.innerHTML;
         uiOverlay.innerHTML = `
@@ -1064,12 +1341,10 @@
           <p style="color: #f39c12;">You are now at: ${label}</p>
         `;
         
-        // Reset UI after 2 seconds
         setTimeout(() => {
           uiOverlay.innerHTML = originalHTML;
         }, 2000);
 
-        // Fade in
         fadeOverlay.setAttribute('animation__fadein', {
           property: 'material.opacity',
           from: 1,
@@ -1086,18 +1361,20 @@
       }, 300);
     }
 
-    // Hotspot Component
+    // ===== HOTSPOT COMPONENT WITH PROXIMITY DETECTION =====
     AFRAME.registerComponent('hotspot-component', {
       schema: {
         videoId: { type: 'string' },
         audioId: { type: 'string' },
         title: { type: 'string' },
-        description: { type: 'string' }
+        description: { type: 'string' },
+        triggerDistance: { type: 'number', default: 2.0 }
       },
 
       init: function () {
         const el = this.el;
         const data = this.data;
+        this.triggered = false;
 
         // Hover effects
         el.addEventListener('mouseenter', () => {
@@ -1106,7 +1383,6 @@
             if (sphere) {
               sphere.setAttribute('scale', '1.2 1.2 1.2');
             }
-            console.log('👀 Hovering hotspot:', data.title);
           }
         });
 
@@ -1121,27 +1397,70 @@
 
         // Click to activate 360 video
         el.addEventListener('click', () => {
-          console.log('🎥 Hotspot clicked:', data.title);
           if (!isVideoMode && !isTeleporting) {
             activateVideoMode(data.videoId, data.audioId, data.title, data.description);
           }
         });
 
-        // Also handle mousedown for better VR compatibility
         el.addEventListener('mousedown', () => {
-          console.log('🎥 Hotspot mousedown:', data.title);
           if (!isVideoMode && !isTeleporting) {
             activateVideoMode(data.videoId, data.audioId, data.title, data.description);
           }
         });
+      },
+
+      tick: function () {
+        if (isVideoMode || isTeleporting || this.triggered) return;
+
+        const cameraRig = document.querySelector('#camera-rig');
+        if (!cameraRig) return;
+
+        const cameraPos = cameraRig.getAttribute('position');
+        const hotspotPos = this.el.object3D.position;
+
+        // Calculate distance
+        const distance = Math.sqrt(
+          Math.pow(cameraPos.x - hotspotPos.x, 2) +
+          Math.pow(cameraPos.z - hotspotPos.z, 2)
+        );
+
+        const proximityIndicator = document.querySelector('#proximity-indicator');
+
+        // Show proximity indicator when getting close
+        if (distance < this.data.triggerDistance + 1 && distance >= this.data.triggerDistance) {
+          if (proximityIndicator) {
+            proximityIndicator.style.display = 'block';
+            proximityIndicator.textContent = `🎬 ${this.data.title} Nearby - ${distance.toFixed(1)}m`;
+          }
+        } else if (proximityIndicator && distance >= this.data.triggerDistance + 1) {
+          proximityIndicator.style.display = 'none';
+        }
+
+        // Auto-trigger when within trigger distance
+        if (distance < this.data.triggerDistance) {
+          const hotspotId = this.el.getAttribute('id') || this.data.videoId;
+          
+          // Check if already triggered
+          if (!triggeredHotspots.has(hotspotId)) {
+            console.log('🎯 AUTO-TRIGGERED HOTSPOT:', this.data.title, 'Distance:', distance.toFixed(2));
+            triggeredHotspots.add(hotspotId);
+            this.triggered = true;
+            
+            if (proximityIndicator) {
+              proximityIndicator.style.display = 'none';
+            }
+
+            // Activate video mode
+            activateVideoMode(this.data.videoId, this.data.audioId, this.data.title, this.data.description);
+          }
+        }
       }
     });
 
-    // Activate 360 Video Mode
+    // ===== ACTIVATE VIDEO MODE =====
     function activateVideoMode(videoId, audioId, title, description) {
       isVideoMode = true;
 
-      // Get elements
       const videoSphere = document.querySelector('#video-sphere');
       const villageWorld = document.querySelector('#village-world');
       const hotspots = document.querySelector('#hotspots');
@@ -1155,16 +1474,14 @@
       const exitBtn = document.querySelector('#exit-video-btn');
       const uiOverlay = document.querySelector('#ui-overlay');
       const clickInstruction = document.querySelector('#click-instruction');
+      const proximityIndicator = document.querySelector('#proximity-indicator');
 
-      // Get video and audio
       const video = document.querySelector(`#${videoId}`);
       const audio = document.querySelector(`#${audioId}`);
 
-      // Store current media
       currentVideo = video;
       currentAudio = audio;
 
-      // Hide ALL scene elements
       villageWorld.setAttribute('visible', 'false');
       hotspots.setAttribute('visible', 'false');
       teleportMarkers.setAttribute('visible', 'false');
@@ -1174,8 +1491,8 @@
       directionalLight.setAttribute('visible', 'false');
       directionalLight2.setAttribute('visible', 'false');
       clickInstruction.style.display = 'none';
+      if (proximityIndicator) proximityIndicator.style.display = 'none';
       
-      // Pause village ambient sound
       if (villageAudio) {
         const soundComponent = villageAudio.components.sound;
         if (soundComponent) soundComponent.pauseSound();
@@ -1187,7 +1504,6 @@
         scene.setAttribute('fog', 'type: none');
       }
 
-      // Update UI
       uiOverlay.innerHTML = `
         <h2>🎥 ${title}</h2>
         <p>${description}</p>
@@ -1195,31 +1511,22 @@
       `;
       exitBtn.style.display = 'block';
 
-      // Set video source and show sphere
       videoSphere.setAttribute('src', `#${videoId}`);
       videoSphere.setAttribute('visible', 'true');
 
-      // Play video and audio
       setTimeout(() => {
         video.play().catch(err => {
           console.log('Video autoplay prevented:', err);
-          document.addEventListener('click', () => {
-            video.play();
-          }, { once: true });
         });
 
         if (audio) {
           audio.currentTime = 0;
           audio.play().catch(err => {
             console.log('Audio autoplay prevented:', err);
-            document.addEventListener('click', () => {
-              audio.play();
-            }, { once: true });
           });
         }
       }, 300);
 
-      // Smooth camera transition
       const camera = document.querySelector('#camera');
       camera.setAttribute('animation', {
         property: 'rotation',
@@ -1229,13 +1536,12 @@
       });
     }
 
-    // Exit Video Mode
+    // ===== EXIT VIDEO MODE =====
     function exitVideoMode() {
       if (!isVideoMode) return;
 
       isVideoMode = false;
 
-      // Get elements
       const videoSphere = document.querySelector('#video-sphere');
       const villageWorld = document.querySelector('#village-world');
       const hotspots = document.querySelector('#hotspots');
@@ -1250,19 +1556,16 @@
       const uiOverlay = document.querySelector('#ui-overlay');
       const clickInstruction = document.querySelector('#click-instruction');
 
-      // Stop and reset video
       if (currentVideo) {
         currentVideo.pause();
         currentVideo.currentTime = 0;
       }
 
-      // Stop and reset audio
       if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
       }
 
-      // Show village world and hide video sphere
       videoSphere.setAttribute('visible', 'false');
       villageWorld.setAttribute('visible', 'true');
       hotspots.setAttribute('visible', 'true');
@@ -1274,7 +1577,6 @@
       directionalLight2.setAttribute('visible', 'true');
       clickInstruction.style.display = 'block';
       
-      // Resume village ambient sound
       if (villageAudio) {
         const soundComponent = villageAudio.components.sound;
         if (soundComponent) soundComponent.playSound();
@@ -1286,27 +1588,98 @@
         scene.setAttribute('fog', 'type: exponential; color: #c9b899; density: 0.015');
       }
 
-      // Reset UI
       uiOverlay.innerHTML = `
         <h2>🏛️ Saidpur Village VR</h2>
         <p>Margalla Hills Foothills</p>
-        <p>🎯 Click teleport markers to move</p>
-        <p>👆 Click golden sphere for 360° video</p>
+        <p>🎯 Use arrow buttons to navigate</p>
+        <p>👆 Walk near golden spheres to trigger 360° videos</p>
       `;
       exitBtn.style.display = 'none';
 
-      // Clear current media
       currentVideo = null;
       currentAudio = null;
+
+      // Reset triggered hotspots after exiting video
+      const hotspotEls = document.querySelectorAll('.hotspot');
+      hotspotEls.forEach(el => {
+        const component = el.components['hotspot-component'];
+        if (component) {
+          component.triggered = false;
+        }
+      });
+      triggeredHotspots.clear();
     }
 
-    // Scene loaded handler
+    // ===== 2D BUTTON NAVIGATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const cameraRig = document.querySelector('#camera-rig');
+      const controller = cameraRig.components['camera-movement-controller'];
+
+      const btnUp = document.getElementById('btn-up');
+      const btnDown = document.getElementById('btn-down');
+      const btnLeft = document.getElementById('btn-left');
+      const btnRight = document.getElementById('btn-right');
+
+      // Mouse/touch events for continuous movement
+      const startMovement = (direction) => {
+        if (controller && !isVideoMode) {
+          controller.startMoving(direction);
+        }
+      };
+
+      const stopMovement = () => {
+        if (controller) {
+          controller.stopMoving();
+        }
+      };
+
+      // Up button
+      btnUp.addEventListener('mousedown', () => startMovement('forward'));
+      btnUp.addEventListener('touchstart', (e) => { e.preventDefault(); startMovement('forward'); });
+      btnUp.addEventListener('mouseup', stopMovement);
+      btnUp.addEventListener('mouseleave', stopMovement);
+      btnUp.addEventListener('touchend', stopMovement);
+
+      // Down button
+      btnDown.addEventListener('mousedown', () => startMovement('backward'));
+      btnDown.addEventListener('touchstart', (e) => { e.preventDefault(); startMovement('backward'); });
+      btnDown.addEventListener('mouseup', stopMovement);
+      btnDown.addEventListener('mouseleave', stopMovement);
+      btnDown.addEventListener('touchend', stopMovement);
+
+      // Left button
+      btnLeft.addEventListener('mousedown', () => startMovement('left'));
+      btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); startMovement('left'); });
+      btnLeft.addEventListener('mouseup', stopMovement);
+      btnLeft.addEventListener('mouseleave', stopMovement);
+      btnLeft.addEventListener('touchend', stopMovement);
+
+      // Right button
+      btnRight.addEventListener('mousedown', () => startMovement('right'));
+      btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); startMovement('right'); });
+      btnRight.addEventListener('mouseup', stopMovement);
+      btnRight.addEventListener('mouseleave', stopMovement);
+      btnRight.addEventListener('touchend', stopMovement);
+
+      // Disable buttons during video mode
+      setInterval(() => {
+        const isDisabled = isVideoMode || isTeleporting;
+        [btnUp, btnDown, btnLeft, btnRight].forEach(btn => {
+          if (isDisabled) {
+            btn.classList.add('disabled');
+          } else {
+            btn.classList.remove('disabled');
+          }
+        });
+      }, 100);
+    });
+
+    // ===== SCENE LOADED HANDLER =====
     document.querySelector('a-scene').addEventListener('loaded', function () {
       setTimeout(() => {
         document.querySelector('#loading-screen').classList.add('hidden');
       }, 1500);
 
-      // Hide instruction after 8 seconds
       setTimeout(() => {
         const instruction = document.querySelector('#click-instruction');
         if (instruction) {
@@ -1318,27 +1691,32 @@
         }
       }, 8000);
 
-      // Handle VR mode changes
       const scene = document.querySelector('a-scene');
       
       scene.addEventListener('enter-vr', () => {
         console.log('🥽 Entering VR mode');
         
-        // Hide desktop cursor
         const cursor = document.querySelector('#cursor');
         if (cursor) cursor.setAttribute('visible', 'false');
         
-        // Show hand tracking
         const leftHand = document.querySelector('#left-hand');
         const rightHand = document.querySelector('#right-hand');
         if (leftHand) leftHand.setAttribute('visible', 'true');
         if (rightHand) rightHand.setAttribute('visible', 'true');
         
-        // Show fallback controllers
         const leftController = document.querySelector('#left-controller');
         const rightController = document.querySelector('#right-controller');
         if (leftController) leftController.setAttribute('visible', 'true');
         if (rightController) rightController.setAttribute('visible', 'true');
+
+        // Show VR navigation buttons
+        const vrNavControls = document.querySelector('#vr-nav-controls');
+        const vrNavAttach = document.querySelector('#vr-nav-attach');
+        if (vrNavControls && vrNavAttach) {
+          // Move VR nav buttons to camera space
+          vrNavAttach.appendChild(vrNavControls);
+          vrNavControls.setAttribute('visible', 'true');
+        }
         
         console.log('✅ VR interactions enabled');
       });
@@ -1346,21 +1724,24 @@
       scene.addEventListener('exit-vr', () => {
         console.log('👋 Exiting VR mode');
         
-        // Show desktop cursor
         const cursor = document.querySelector('#cursor');
         if (cursor) cursor.setAttribute('visible', 'true');
         
-        // Hide hand tracking
         const leftHand = document.querySelector('#left-hand');
         const rightHand = document.querySelector('#right-hand');
         if (leftHand) leftHand.setAttribute('visible', 'false');
         if (rightHand) rightHand.setAttribute('visible', 'false');
         
-        // Hide controllers
         const leftController = document.querySelector('#left-controller');
         const rightController = document.querySelector('#right-controller');
         if (leftController) leftController.setAttribute('visible', 'false');
         if (rightController) rightController.setAttribute('visible', 'false');
+
+        // Hide VR navigation buttons
+        const vrNavControls = document.querySelector('#vr-nav-controls');
+        if (vrNavControls) {
+          vrNavControls.setAttribute('visible', 'false');
+        }
       });
     });
 
@@ -1370,16 +1751,6 @@
         exitVideoMode();
       }
     });
-
-    // Mobile touch handling
-    document.addEventListener('touchstart', function() {
-      if (isVideoMode && currentVideo && currentVideo.paused) {
-        currentVideo.play();
-      }
-      if (isVideoMode && currentAudio && currentAudio.paused) {
-        currentAudio.play();
-      }
-    }, { once: true });
 
     // Prevent context menu
     document.addEventListener('contextmenu', (e) => {
