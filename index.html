@@ -115,7 +115,7 @@
         </a-entity>
 
         <a-entity id="hotspots">
-        <a-entity id="entrance-hotspot" position="0 1.5 -5" class="clickable"
+        <a-entity id="entrance-hotspot" position="0 1.5 2" class="clickable"
                     onclick="enterVideoMode('entrance-video')"
                     geometry="primitive: sphere; radius: 0.4"
                     material="color: #ffd700; emissive: #ffaa00; emissiveIntensity: 0.5">
@@ -142,7 +142,6 @@
 
   <script>
     let isVideoMode = false;
-    // We get references to the containers
     const videoSphere = document.querySelector('#video-display');
     const environmentWorld = document.querySelector('#environment-world');
     const cameraRig = document.querySelector('#camera-rig');
@@ -150,30 +149,22 @@
     const uiOverlay = document.querySelector('#ui-overlay');
     const instructions = document.querySelector('#click-instruction');
 
-    // Store the previous position to return to exact spot
     let storedPosition = "0 0 5"; 
 
     function enterVideoMode(videoId) {
       isVideoMode = true;
       const video = document.getElementById(videoId);
-      video.currentTime = 0; // Optional: restart video
+      video.currentTime = 0; 
       video.play();
       
-      // Save current position
       storedPosition = cameraRig.getAttribute('position');
 
-      // 1. Show Video Sphere
       videoSphere.setAttribute('src', '#' + videoId);
       videoSphere.setAttribute('visible', 'true');
-      
-      // 2. HIDE the entire 3D world (This fixes your issue)
       environmentWorld.setAttribute('visible', 'false');
 
-      // 3. Move camera to center (0,0,0) so the viewer is in the middle of the video sphere
-      // We don't need to move it up to 100 anymore because the world is hidden.
       cameraRig.setAttribute('position', '0 0 0'); 
       
-      // UI Updates
       exitBtn.style.display = 'block';
       uiOverlay.style.display = 'none';
       instructions.style.display = 'none';
@@ -184,22 +175,15 @@
       const videos = document.querySelectorAll('video');
       videos.forEach(v => { v.pause(); });
       
-      // 1. Hide Video Sphere
       videoSphere.setAttribute('visible', 'false');
-
-      // 2. SHOW the 3D world again
       environmentWorld.setAttribute('visible', 'true');
-
-      // 3. Restore camera position
       cameraRig.setAttribute('position', storedPosition);
       
-      // UI Updates
       exitBtn.style.display = 'none';
       uiOverlay.style.display = 'block';
       instructions.style.display = 'block';
     }
 
-    // Hide loading screen
     document.querySelector('a-scene').addEventListener('loaded', () => {
       setTimeout(() => document.querySelector('#loading-screen').classList.add('hidden'), 1500);
     });
