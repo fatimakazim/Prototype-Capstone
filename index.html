@@ -155,23 +155,31 @@
     // Store position to calculate return vector
     let lastHotspotPosition = null;
 
-    // --- MAIN LOOP: CHECKS DISTANCE EVERY FRAME ---
+    // --- MAIN LOOP: CHECKS DISTANCE EVERY FRAME (FIXED VERSION) ---
     AFRAME.registerComponent('proximity-checker', {
       tick: function () {
         if (isVideoMode) return; // Don't check if already watching video
 
-        const playerPos = cameraRig.object3D.position; // Get player position
+        // Get world position of the player
+        const playerWorldPos = new THREE.Vector3();
+        cameraRig.object3D.getWorldPosition(playerWorldPos);
+
         const hotspots = document.querySelectorAll('.proximity-trigger');
 
         hotspots.forEach(hotspot => {
-          const hotspotPos = hotspot.object3D.position;
+          // Get world position of the hotspot
+          const hotspotWorldPos = new THREE.Vector3();
+          hotspot.object3D.getWorldPosition(hotspotWorldPos);
           
           // Calculate distance
-          const distance = playerPos.distanceTo(hotspotPos);
+          const distance = playerWorldPos.distanceTo(hotspotWorldPos);
+
+          // Debug: Show distances in console (you can remove this later)
+          // console.log(`Distance to ${hotspot.id}: ${distance.toFixed(2)}m`);
 
           if (distance < TRIGGER_DISTANCE) {
              const videoId = hotspot.getAttribute('data-video');
-             lastHotspotPosition = hotspotPos.clone(); // Remember where we triggered it
+             lastHotspotPosition = hotspotWorldPos.clone(); // Remember where we triggered it
              enterVideoMode(videoId);
           }
         });
@@ -198,8 +206,6 @@
 
       // Center camera for video
       cameraRig.setAttribute('position', '0 0 0'); 
-      // Reset rotation so they face forward in video (optional)
-      // mainCamera.setAttribute('rotation', '0 0 0');
 
       exitBtn.style.display = 'block';
       uiOverlay.style.display = 'none';
