@@ -2,60 +2,103 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Saidpur Village VR - Margalla Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saidpur Village VR - Ultimate Edition</title>
+  
+  <!-- A-Frame Core -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  
+  <!-- A-Frame Extras for Movement Controls -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-blink-controls@0.4.3/dist/aframe-blink-controls.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.0.0/dist/aframe-extras.controls.min.js"></script>
-  <script src="saidpur-village-vr.js" defer></script>
   
   <style>
-    body { 
-      margin: 0; 
-      overflow: hidden; 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    
-    #ui-overlay { 
-      position: fixed; 
-      top: 20px; 
-      left: 20px; 
-      z-index: 1000; 
-      background: rgba(0, 0, 0, 0.75); 
-      color: white; 
-      padding: 18px 24px; 
-      border-radius: 12px; 
+
+    #ui-overlay {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 18px 24px;
+      border-radius: 12px;
       border-left: 4px solid #f39c12;
       pointer-events: none;
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
-    
+
     #ui-overlay h2 {
       margin: 0 0 8px 0;
       font-size: 20px;
       font-weight: 600;
       letter-spacing: 0.5px;
     }
-    
+
     #ui-overlay p {
       margin: 0;
       font-size: 13px;
       opacity: 0.9;
+      line-height: 1.6;
     }
-    
-    #exit-btn { 
-      position: fixed; 
-      top: 20px; 
-      right: 20px; 
-      z-index: 1001; 
+
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      transition: opacity 0.5s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(243, 156, 18, 0.3);
+      border-top: 5px solid #f39c12;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: white;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #exit-video-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1001;
       background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-      color: white; 
-      border: none; 
-      padding: 14px 28px; 
-      border-radius: 50px; 
-      cursor: pointer; 
-      display: none; 
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: none;
       font-weight: 600;
       font-size: 14px;
       letter-spacing: 0.5px;
@@ -63,25 +106,63 @@
       box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4);
       transition: all 0.3s ease;
     }
-    
-    #exit-btn:hover {
+
+    #exit-video-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 25px rgba(231, 76, 60, 0.6);
+    }
+
+    .click-instruction {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 14px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
     }
   </style>
 </head>
 
 <body>
-  <button id="exit-btn">EXIT 360° VIEW</button>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">Loading Saidpur Village VR Experience...</div>
+  </div>
+
+  <!-- UI Overlay -->
   <div id="ui-overlay">
     <h2>🏛️ Saidpur Village VR</h2>
-    <p>Margalla Hills Foothills | WASD to Walk | Approach Golden Sphere</p>
+    <p>Margalla Hills Foothills</p>
+    <p>🎯 Click teleport markers to move</p>
+    <p>👆 Click golden sphere for 360° video</p>
+  </div>
+
+  <!-- Exit Video Button -->
+  <button id="exit-video-btn" onclick="exitVideoMode()">EXIT 360° VIEW</button>
+
+  <!-- Click Instruction -->
+  <div class="click-instruction" id="click-instruction">
+    Click glowing markers to teleport around the village
   </div>
 
   <a-scene 
-    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;" 
+    vr-mode-ui="enabled: true"
+    loading-screen="enabled: false"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;"
     fog="type: exponential; color: #c9b899; density: 0.015;">
-    
+
+    <!-- Asset Management -->
     <a-assets>
       <!-- Sky & Environment -->
       <img id="sky-tex" src="https://cdn.polyhaven.com/asset_img/primary/kloofendal_48d_partly_cloudy_puresky.png?height=780" crossorigin="anonymous">
@@ -99,23 +180,58 @@
       <!-- Decorative Textures -->
       <img id="terracotta-tex" src="https://cdn.polyhaven.com/asset_img/primary/terracotta_02.png?height=780" crossorigin="anonymous">
       <img id="water-tex" src="https://cdn.polyhaven.com/asset_img/primary/water_002.png?height=780" crossorigin="anonymous">
+
+      <!-- 360° Videos -->
+      <video id="entrance-video" 
+             src="https://ucarecdn.com/fadab25d-0b3a-45f7-8ef5-85318e92a477/" 
+             preload="metadata" 
+             crossorigin="anonymous" 
+             playsinline 
+             webkit-playsinline></video>
       
-      <!-- Video Asset -->
-      <video id="vid-360" src="https://ucarecdn.com/fadab25d-0b3a-45f7-8ef5-85318e92a477/" crossorigin="anonymous" playsinline loop="false"></video>
+      <video id="mosque-video" 
+             src="https://ucarecdn.com/bcece0ab-86f5-4480-ba77-97b548346167/" 
+             preload="metadata" 
+             crossorigin="anonymous" 
+             playsinline 
+             webkit-playsinline></video>
       
-      <!-- Audio Assets -->
+      <video id="market-video" 
+             src="https://ucarecdn.com/5c90c7fc-acbd-47a0-adb8-45ac48627f4c/" 
+             preload="metadata" 
+             crossorigin="anonymous" 
+             playsinline 
+             webkit-playsinline></video>
+      
+      <video id="temple-video" 
+             src="https://ucarecdn.com/ff39b3c8-72b3-4f10-8ee6-bd65b0a0f5ff/" 
+             preload="metadata" 
+             crossorigin="anonymous" 
+             playsinline 
+             webkit-playsinline></video>
+
+      <!-- Audio Narrations -->
+      <audio id="entrance-audio" src="entrance-narration.mp3" preload="auto"></audio>
+      <audio id="mosque-audio" src="mosque-narration.mp3" preload="auto"></audio>
+      <audio id="market-audio" src="market-narration.mp3" preload="auto"></audio>
+      <audio id="temple-audio" src="temple-narration.mp3" preload="auto"></audio>
+
+      <!-- Ambient Village Sound -->
       <audio id="ambient-village" src="https://cdn.freesound.org/previews/665/665958_10739144-lq.mp3" preload="auto" loop crossorigin="anonymous"></audio>
-      <audio id="video-audio" src="https://cdn.freesound.org/previews/456/456966_9497060-lq.mp3" preload="auto" crossorigin="anonymous"></audio>
     </a-assets>
 
     <!-- LIGHTING SETUP - Golden Hour Atmosphere -->
-    <a-entity light="type: ambient; color: #b8a68a; intensity: 0.4;"></a-entity>
-    <a-entity light="type: hemisphere; color: #ffeaa7; groundColor: #6c5b3e; intensity: 0.5;"></a-entity>
-    <a-entity light="type: directional; color: #ffb347; intensity: 1.2; castShadow: true; shadowCameraVisible: false;" 
+    <a-entity id="ambient-light" light="type: ambient; color: #b8a68a; intensity: 0.4;"></a-entity>
+    <a-entity id="hemisphere-light" light="type: hemisphere; color: #ffeaa7; groundColor: #6c5b3e; intensity: 0.5;"></a-entity>
+    <a-entity id="directional-light" 
+              light="type: directional; color: #ffb347; intensity: 1.2; castShadow: true; shadowCameraVisible: false;" 
               position="-10 20 8" 
-              rotation="-45 -30 0"></a-entity>
-    <a-entity light="type: directional; color: #87ceeb; intensity: 0.3;" 
-              position="10 15 -5"></a-entity>
+              rotation="-45 -30 0">
+    </a-entity>
+    <a-entity id="directional-light-2" 
+              light="type: directional; color: #87ceeb; intensity: 0.3;" 
+              position="10 15 -5">
+    </a-entity>
 
     <!-- SKY -->
     <a-sky id="main-sky" src="#sky-tex" color="#e8d4b0"></a-sky>
@@ -126,8 +242,15 @@
               sound="src: #ambient-village; autoplay: true; loop: true; volume: 0.6; positional: true; refDistance: 5; maxDistance: 50; rolloffFactor: 1;">
     </a-entity>
 
+    <!-- 360 Video Sphere (Hidden by default) -->
+    <a-videosphere 
+      id="video-sphere"
+      radius="10"
+      visible="false">
+    </a-videosphere>
+
     <!-- VILLAGE WORLD CONTAINER -->
-    <a-entity id="village-world">
+    <a-entity id="village-world" visible="true">
       
       <!-- BACKGROUND HILLS (360° Panorama) -->
       <a-curvedimage 
@@ -194,73 +317,83 @@
         
         <!-- Roof Overhang -->
         <a-box position="0 5.4 0" width="8.4" height="0.3" depth="6.4" 
-               material="color: #5a4a3a; roughness: 0.8;"
+               material="src: #wood-tex; repeat: 4 3; color: #654321;"
                shadow="cast: true">
         </a-box>
         
-        <!-- Turquoise Windows -->
-        <a-plane position="-2.5 2.5 3.01" width="1.2" height="1.6" color="#5dade2" rotation="0 0 0"></a-plane>
-        <a-plane position="0 2.5 3.01" width="1.2" height="1.6" color="#5dade2" rotation="0 0 0"></a-plane>
-        <a-plane position="2.5 2.5 3.01" width="0.9" height="1.8" color="#5dade2" rotation="0 0 0"></a-plane>
+        <!-- Slanted Roof -->
+        <a-box position="0 6.0 0" width="8.8" height="0.8" depth="6.8" 
+               material="src: #terracotta-tex; repeat: 4 3; color: #a0522d;"
+               rotation="0 0 0"
+               shadow="cast: true">
+        </a-box>
         
         <!-- Door -->
-        <a-plane position="2.5 1.5 3.01" width="0.9" height="1.0" color="#7d6e5a" rotation="0 0 0"></a-plane>
+        <a-box position="0 1.8 3.1" width="1.2" height="2.3" depth="0.15" 
+               material="color: #654321; roughness: 0.9;">
+        </a-box>
+        
+        <!-- Windows -->
+        <a-box position="-2.5 2.5 3.05" width="1.2" height="1.5" depth="0.1" 
+               material="color: #87ceeb; transparent: true; opacity: 0.6;">
+        </a-box>
+        <a-box position="2.5 2.5 3.05" width="1.2" height="1.5" depth="0.1" 
+               material="color: #87ceeb; transparent: true; opacity: 0.6;">
+        </a-box>
       </a-entity>
 
-      <!-- RIGHT HOUSE WITH STONE FOUNDATION -->
-      <a-entity position="10 0 -15" rotation="0 -15 0">
+      <!-- RIGHT HOUSE -->
+      <a-entity position="10 0 -12" rotation="0 -15 0">
         <!-- Stone Foundation -->
-        <a-box position="0 0.4 0" width="9" height="0.8" depth="6.5" 
+        <a-box position="0 0.4 0" width="7.5" height="0.8" depth="5.5" 
                material="src: #stone-tex; repeat: 3 2; roughness: 0.9; color: #7a7a7a;"
                shadow="cast: true; receive: true">
         </a-box>
         
-        <!-- Raised Platform -->
-        <a-box position="0 1.0 2.8" width="9" height="0.2" depth="2.5" 
-               material="src: #wood-tex; repeat: 4 1; color: #8b7355;"
-               shadow="cast: true; receive: true">
-        </a-box>
-        
-        <!-- Main Structure -->
-        <a-box position="0 2.8 0" width="8.5" height="4.8" depth="6" 
-               material="src: #brick-tex; repeat: 3 2; color: #c67b5c;"
+        <!-- Main Brick Structure -->
+        <a-box position="0 2.6 0" width="7" height="4.4" depth="5" 
+               material="src: #brick-tex; repeat: 3 2; color: #d2691e;"
                shadow="cast: true; receive: true">
         </a-box>
         
         <!-- Roof -->
-        <a-box position="0 5.4 0" width="8.9" height="0.3" depth="6.4" 
-               material="color: #5a4a3a; roughness: 0.8;"
+        <a-box position="0 5.2 0" width="7.5" height="0.8" depth="5.5" 
+               material="src: #terracotta-tex; repeat: 4 3; color: #cd853f;"
                shadow="cast: true">
         </a-box>
         
-        <!-- Turquoise Windows -->
-        <a-plane position="-2.8 2.5 3.01" width="1.2" height="1.6" color="#5dade2"></a-plane>
-        <a-plane position="0 2.5 3.01" width="1.2" height="1.6" color="#5dade2"></a-plane>
-        <a-plane position="2.8 2.5 3.01" width="1.2" height="1.6" color="#5dade2"></a-plane>
+        <!-- Door -->
+        <a-box position="0 1.6 2.6" width="1.0" height="2.0" depth="0.15" 
+               material="color: #8b4513; roughness: 0.9;">
+        </a-box>
+        
+        <!-- Windows -->
+        <a-box position="-2 2.3 2.55" width="1.0" height="1.2" depth="0.1" 
+               material="color: #add8e6; transparent: true; opacity: 0.6;">
+        </a-box>
+        <a-box position="2 2.3 2.55" width="1.0" height="1.2" depth="0.1" 
+               material="color: #add8e6; transparent: true; opacity: 0.6;">
+        </a-box>
       </a-entity>
 
-      <!-- TEMPLE/MOSQUE WITH YELLOW-WHITE STRIPED DOME -->
-      <a-entity position="0 0 -35" rotation="0 0 0">
-        <!-- Main Building Base -->
-        <a-box position="0 0.4 0" width="10" height="0.8" depth="8" 
-               material="src: #stone-tex; repeat: 3 2; color: #9a8a7a;"
+      <!-- MOSQUE WITH DETAILED DOME -->
+      <a-entity position="0 0 -22" rotation="0 0 0">
+        <!-- Stone Foundation -->
+        <a-box position="0 0.5 0" width="8.5" height="1.0" depth="8.5" 
+               material="src: #stone-tex; repeat: 3 1; roughness: 0.9; color: #8a8a8a;"
                shadow="cast: true; receive: true">
         </a-box>
         
-        <a-box position="0 3 0" width="9.5" height="5.2" depth="7.5" 
-               material="src: #brick-tex; repeat: 3 2; color: #d4a574;"
+        <!-- Main Structure -->
+        <a-box position="0 3.0 0" width="8" height="5" depth="8" 
+               material="color: #f5deb3; roughness: 0.6;"
                shadow="cast: true; receive: true">
         </a-box>
         
-        <!-- Dome Base (Drum) -->
-        <a-cylinder position="0 6.2 0" radius="3" height="1.2" 
-                    material="color: #e8d4b0; roughness: 0.7;"
-                    shadow="cast: true">
-        </a-cylinder>
-        
-        <!-- Main Dome with Vertical Stripes -->
-        <a-sphere position="0 8 0" radius="2.8" 
-                  material="color: #f4d03f; roughness: 0.4; metalness: 0.3;"
+        <!-- Main Dome (White with Gold Accents) -->
+        <a-sphere position="0 7.5 0" 
+                  radius="2.8" 
+                  material="color: #faf8f0; metalness: 0.3; roughness: 0.4;"
                   shadow="cast: true"
                   segments-height="16">
         </a-sphere>
@@ -285,7 +418,7 @@
         <a-sphere position="0 11.1 0" radius="0.2" material="color: #d4af37; metalness: 0.9;"></a-sphere>
         
         <!-- Arched Windows -->
-        <a-entity position="0 3 3.76">
+        <a-entity position="0 3 4.05">
           <a-plane position="-3 0 0" width="1.0" height="2.2" color="#5dade2" 
                    geometry="primitive: plane" 
                    material="side: double">
@@ -293,6 +426,11 @@
           <a-plane position="0 0 0" width="1.0" height="2.2" color="#5dade2" material="side: double"></a-plane>
           <a-plane position="3 0 0" width="1.0" height="2.2" color="#5dade2" material="side: double"></a-plane>
         </a-entity>
+
+        <!-- Entrance Arch -->
+        <a-box position="0 2 4.1" width="2.2" height="3" depth="0.1" 
+               material="color: #8b4513; roughness: 0.8;">
+        </a-box>
       </a-entity>
 
       <!-- VILLAGE PROPS & ANIMALS -->
@@ -370,19 +508,177 @@
         </a-cone>
       </a-entity>
 
-      <!-- EXPLORE 360 HOTSPOT (Golden Glowing Sphere) with Proximity Detection -->
-      <a-entity id="hotspot-container" 
-                class="hotspot" 
+    </a-entity>
+
+    <!-- TELEPORT MARKERS - Strategic locations for teleportation -->
+    <a-entity id="teleport-markers" visible="true">
+      
+      <!-- Entrance teleport marker -->
+      <a-entity 
+        class="teleport-marker"
+        position="0 0.05 0"
+        teleport-target
+        data-label="Village Entrance">
+        <a-cylinder 
+          radius="0.8" 
+          height="0.05" 
+          material="color: #00ff00; opacity: 0.6; transparent: true; shader: flat"
+          animation="property: material.opacity; from: 0.4; to: 0.8; dur: 1000; dir: alternate; loop: true">
+        </a-cylinder>
+        <a-ring 
+          radius-inner="0.8" 
+          radius-outer="1" 
+          rotation="-90 0 0" 
+          position="0 0.01 0"
+          material="color: #00ff00; opacity: 0.8; shader: flat"
+          animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true">
+        </a-ring>
+        <a-text 
+          value="🏛️ Entrance" 
+          position="0 0.5 0" 
+          align="center" 
+          color="#00ff00" 
+          width="3"
+          look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Left House teleport marker -->
+      <a-entity 
+        class="teleport-marker"
+        position="-10 0.05 -10"
+        teleport-target
+        data-label="Left House">
+        <a-cylinder 
+          radius="0.8" 
+          height="0.05" 
+          material="color: #00ffff; opacity: 0.6; transparent: true; shader: flat"
+          animation="property: material.opacity; from: 0.4; to: 0.8; dur: 1000; dir: alternate; loop: true">
+        </a-cylinder>
+        <a-ring 
+          radius-inner="0.8" 
+          radius-outer="1" 
+          rotation="-90 0 0" 
+          position="0 0.01 0"
+          material="color: #00ffff; opacity: 0.8; shader: flat"
+          animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true">
+        </a-ring>
+        <a-text 
+          value="🏠 Left House" 
+          position="0 0.5 0" 
+          align="center" 
+          color="#00ffff" 
+          width="3"
+          look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Right House teleport marker -->
+      <a-entity 
+        class="teleport-marker"
+        position="10 0.05 -12"
+        teleport-target
+        data-label="Right House">
+        <a-cylinder 
+          radius="0.8" 
+          height="0.05" 
+          material="color: #ff00ff; opacity: 0.6; transparent: true; shader: flat"
+          animation="property: material.opacity; from: 0.4; to: 0.8; dur: 1000; dir: alternate; loop: true">
+        </a-cylinder>
+        <a-ring 
+          radius-inner="0.8" 
+          radius-outer="1" 
+          rotation="-90 0 0" 
+          position="0 0.01 0"
+          material="color: #ff00ff; opacity: 0.8; shader: flat"
+          animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true">
+        </a-ring>
+        <a-text 
+          value="🏠 Right House" 
+          position="0 0.5 0" 
+          align="center" 
+          color="#ff00ff" 
+          width="3"
+          look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Mosque teleport marker -->
+      <a-entity 
+        class="teleport-marker"
+        position="0 0.05 -17"
+        teleport-target
+        data-label="Historic Mosque">
+        <a-cylinder 
+          radius="0.8" 
+          height="0.05" 
+          material="color: #ffff00; opacity: 0.6; transparent: true; shader: flat"
+          animation="property: material.opacity; from: 0.4; to: 0.8; dur: 1000; dir: alternate; loop: true">
+        </a-cylinder>
+        <a-ring 
+          radius-inner="0.8" 
+          radius-outer="1" 
+          rotation="-90 0 0" 
+          position="0 0.01 0"
+          material="color: #ffff00; opacity: 0.8; shader: flat"
+          animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true">
+        </a-ring>
+        <a-text 
+          value="🕌 Mosque" 
+          position="0 0.5 0" 
+          align="center" 
+          color="#ffff00" 
+          width="3"
+          look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Village Center teleport marker -->
+      <a-entity 
+        class="teleport-marker"
+        position="0 0.05 -10"
+        teleport-target
+        data-label="Village Center">
+        <a-cylinder 
+          radius="0.8" 
+          height="0.05" 
+          material="color: #ff6600; opacity: 0.6; transparent: true; shader: flat"
+          animation="property: material.opacity; from: 0.4; to: 0.8; dur: 1000; dir: alternate; loop: true">
+        </a-cylinder>
+        <a-ring 
+          radius-inner="0.8" 
+          radius-outer="1" 
+          rotation="-90 0 0" 
+          position="0 0.01 0"
+          material="color: #ff6600; opacity: 0.8; shader: flat"
+          animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true">
+        </a-ring>
+        <a-text 
+          value="⭐ Center" 
+          position="0 0.5 0" 
+          align="center" 
+          color="#ff6600" 
+          width="3"
+          look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+    </a-entity>
+
+    <!-- HOTSPOTS for 360° Videos - GOLDEN SPHERES -->
+    <a-entity id="hotspots" visible="true">
+      
+      <!-- Main 360 Hotspot (Golden Glowing Sphere) -->
+      <a-entity class="hotspot" 
                 position="0 1.6 -8" 
-                data-video="vid-360"
-                proximity-trigger="distance: 2.0;">
+                hotspot-component="videoId: entrance-video; audioId: entrance-audio; title: Village Entrance 360°; description: Experience the historic gateway in immersive 360°">
         
         <!-- Glowing Core -->
-        <a-sphere id="hotspot-sphere" 
-                  radius="0.35" 
-                  material="color: #f39c12; emissive: #f39c12; emissiveIntensity: 0.8; metalness: 0.5; roughness: 0.2;"
-                  animation="property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
-                  animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+        <a-sphere 
+          radius="0.35" 
+          material="color: #f39c12; emissive: #f39c12; emissiveIntensity: 0.8; metalness: 0.5; roughness: 0.2;"
+          animation="property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+          animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
         </a-sphere>
         
         <!-- Outer Glow Ring -->
@@ -392,67 +688,509 @@
                 rotation="-90 0 0">
         </a-ring>
         
-        <!-- Proximity Detection Zone (Invisible) -->
-        <a-sphere id="proximity-zone" 
-                  radius="2.0" 
-                  material="visible: false; transparent: true; opacity: 0;"
-                  class="proximity-trigger">
-        </a-sphere>
-        
         <!-- Text Label -->
-        <a-text value="APPROACH OR CLICK&#10;360° VIDEO" 
+        <a-text value="CLICK FOR&#10;360° VIDEO" 
                 align="center" 
                 position="0 0.9 0" 
-                width="6"
+                width="5"
                 color="#ffffff"
-                font="roboto"
-                shader="msdf"
-                material="opacity: 0.95;">
+                look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Mosque 360 Hotspot -->
+      <a-entity class="hotspot" 
+                position="0 2.5 -22" 
+                hotspot-component="videoId: mosque-video; audioId: mosque-audio; title: Historic Mosque 360°; description: Explore the beauty of this centuries-old mosque">
+        
+        <a-sphere 
+          radius="0.35" 
+          material="color: #4169E1; emissive: #4169E1; emissiveIntensity: 0.8; metalness: 0.5; roughness: 0.2;"
+          animation="property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+          animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+        </a-sphere>
+        
+        <a-ring radius-inner="0.4" radius-outer="0.55" 
+                material="color: #4169E1; transparent: true; opacity: 0.4; side: double;"
+                animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+                rotation="-90 0 0">
+        </a-ring>
+        
+        <a-text value="🕌 MOSQUE&#10;360° VIEW" 
+                align="center" 
+                position="0 0.9 0" 
+                width="5"
+                color="#ffffff"
+                look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Left House 360 Hotspot -->
+      <a-entity class="hotspot" 
+                position="-10 2 -15" 
+                hotspot-component="videoId: market-video; audioId: market-audio; title: Traditional House 360°; description: Step inside a traditional village home">
+        
+        <a-sphere 
+          radius="0.35" 
+          material="color: #FF6347; emissive: #FF6347; emissiveIntensity: 0.8; metalness: 0.5; roughness: 0.2;"
+          animation="property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+          animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+        </a-sphere>
+        
+        <a-ring radius-inner="0.4" radius-outer="0.55" 
+                material="color: #FF6347; transparent: true; opacity: 0.4; side: double;"
+                animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+                rotation="-90 0 0">
+        </a-ring>
+        
+        <a-text value="🏠 HOUSE&#10;360° VIEW" 
+                align="center" 
+                position="0 0.9 0" 
+                width="5"
+                color="#ffffff"
+                look-at="[camera]">
+        </a-text>
+      </a-entity>
+
+      <!-- Right House 360 Hotspot -->
+      <a-entity class="hotspot" 
+                position="10 2 -12" 
+                hotspot-component="videoId: temple-video; audioId: temple-audio; title: Village Home 360°; description: Discover traditional architecture and daily life">
+        
+        <a-sphere 
+          radius="0.35" 
+          material="color: #32CD32; emissive: #32CD32; emissiveIntensity: 0.8; metalness: 0.5; roughness: 0.2;"
+          animation="property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+          animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+        </a-sphere>
+        
+        <a-ring radius-inner="0.4" radius-outer="0.55" 
+                material="color: #32CD32; transparent: true; opacity: 0.4; side: double;"
+                animation="property: scale; to: 1.4 1.4 1.4; dir: alternate; loop: true; dur: 1500; easing: easeInOutQuad"
+                rotation="-90 0 0">
+        </a-ring>
+        
+        <a-text value="🏠 HOME&#10;360° VIEW" 
+                align="center" 
+                position="0 0.9 0" 
+                width="5"
+                color="#ffffff"
+                look-at="[camera]">
         </a-text>
       </a-entity>
 
     </a-entity>
 
-    <!-- DUAL-INPUT CAMERA RIG -->
-    <a-entity id="rig" position="0 0 0">
-      <a-entity id="rig" position="0 0 0">
-  
-  <a-entity id="desktop-camera" 
-            camera 
-            look-controls 
-            wasd-controls="acceleration: 20;"
-            position="0 1.6 0">
-    <a-cursor raycaster="objects: .hotspot" material="color: #f39c12;"></a-cursor>
-  </a-entity>
+    <!-- Camera Rig with VR controls -->
+    <a-entity id="camera-rig" position="0 0 5">
+      <a-entity 
+        id="camera"
+        camera 
+        position="0 1.6 0"
+        look-controls="pointerLockEnabled: false"
+        wasd-controls="enabled: false">
+        
+        <!-- VR Controllers -->
+        <a-entity 
+          id="left-hand"
+          laser-controls="hand: left"
+          raycaster="objects: .teleport-marker, .hotspot; far: 20"
+          line="color: #f39c12; opacity: 0.75"
+          visible="false">
+        </a-entity>
+        
+        <a-entity 
+          id="right-hand"
+          laser-controls="hand: right"
+          raycaster="objects: .teleport-marker, .hotspot; far: 20"
+          line="color: #f39c12; opacity: 0.75"
+          visible="false">
+        </a-entity>
 
-  <a-entity id="vr-camera" camera look-controls position="0 1.6 0" visible="false"></a-entity>
+        <!-- Cursor for non-VR interaction -->
+        <a-entity 
+          id="cursor"
+          cursor="fuse: true; fuseTimeout: 500"
+          position="0 0 -1"
+          geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015"
+          material="color: #f39c12; shader: flat"
+          raycaster="objects: .teleport-marker, .hotspot; far: 20"
+          animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
+          animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.5 0.5 0.5; dur: 500; easing: easeInCubic"
+          animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150; easing: easeInCubic">
+        </a-entity>
+      </a-entity>
+    </a-entity>
 
-  <a-entity id="left-hand" 
-            hand-tracking-controls="hand: left;" 
-            hand-gesture-move="rig: #rig; speed: 0.05"
-            visible="false">
-  </a-entity>
-
-  <a-entity id="right-hand" 
-            hand-tracking-controls="hand: right;" 
-            pinch-to-click
-            visible="false">
-  </a-entity>
-  
-  <a-box id="vr-exit-ui" 
-         class="hotspot"
-         position="0.5 1 -0.5" 
-         scale="0.15 0.1 0.01" 
-         color="#c0392b"
-         text="value: EXIT VR; align: center; width: 2"
-         onclick="document.querySelector('a-scene').exitVR();">
-  </a-box>
-</a-entity>
-      
-  
-
+    <!-- Fade overlay for smooth transitions -->
+    <a-entity 
+      id="fade-overlay"
+      geometry="primitive: plane; width: 2; height: 2"
+      material="color: black; opacity: 0; transparent: true; shader: flat"
+      position="0 0 -1"
+      visible="false">
     </a-entity>
 
   </a-scene>
+
+  <script>
+    // Global state management
+    let isVideoMode = false;
+    let currentAudio = null;
+    let currentVideo = null;
+    let isTeleporting = false;
+
+    // Teleport Target Component
+    AFRAME.registerComponent('teleport-target', {
+      init: function () {
+        const el = this.el;
+        const label = el.getAttribute('data-label') || 'Location';
+
+        // Hover effects
+        el.addEventListener('mouseenter', () => {
+          if (!isVideoMode && !isTeleporting) {
+            const cylinder = el.querySelector('a-cylinder');
+            const ring = el.querySelector('a-ring');
+            if (cylinder) cylinder.setAttribute('material', 'opacity', '0.95');
+            if (ring) ring.setAttribute('material', 'opacity', '1.0');
+          }
+        });
+
+        el.addEventListener('mouseleave', () => {
+          if (!isVideoMode && !isTeleporting) {
+            const cylinder = el.querySelector('a-cylinder');
+            const ring = el.querySelector('a-ring');
+            if (cylinder) cylinder.setAttribute('material', 'opacity', '0.6');
+            if (ring) ring.setAttribute('material', 'opacity', '0.8');
+          }
+        });
+
+        // Click to teleport
+        el.addEventListener('click', () => {
+          if (!isVideoMode && !isTeleporting) {
+            teleportTo(el.object3D.position, label);
+          }
+        });
+      }
+    });
+
+    // Teleport function with smooth transition
+    function teleportTo(targetPosition, label) {
+      if (isTeleporting) return;
+      
+      isTeleporting = true;
+      const cameraRig = document.querySelector('#camera-rig');
+      const fadeOverlay = document.querySelector('#fade-overlay');
+      
+      fadeOverlay.setAttribute('visible', 'true');
+      
+      // Fade out
+      fadeOverlay.setAttribute('animation__fadeout', {
+        property: 'material.opacity',
+        from: 0,
+        to: 1,
+        dur: 300,
+        easing: 'easeInQuad'
+      });
+
+      // Move camera after fade out
+      setTimeout(() => {
+        const newPosition = {
+          x: targetPosition.x,
+          y: 0,
+          z: targetPosition.z + 2
+        };
+        
+        cameraRig.setAttribute('position', newPosition);
+        
+        // Update UI with location
+        const uiOverlay = document.querySelector('#ui-overlay');
+        const originalHTML = uiOverlay.innerHTML;
+        uiOverlay.innerHTML = `
+          <h2>🎯 Teleported to ${label}</h2>
+          <p style="color: #f39c12;">You are now at: ${label}</p>
+        `;
+        
+        // Reset UI after 2 seconds
+        setTimeout(() => {
+          uiOverlay.innerHTML = originalHTML;
+        }, 2000);
+
+        // Fade in
+        fadeOverlay.setAttribute('animation__fadein', {
+          property: 'material.opacity',
+          from: 1,
+          to: 0,
+          dur: 300,
+          easing: 'easeOutQuad'
+        });
+
+        setTimeout(() => {
+          fadeOverlay.setAttribute('visible', 'false');
+          isTeleporting = false;
+        }, 300);
+        
+      }, 300);
+    }
+
+    // Hotspot Component
+    AFRAME.registerComponent('hotspot-component', {
+      schema: {
+        videoId: { type: 'string' },
+        audioId: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' }
+      },
+
+      init: function () {
+        const el = this.el;
+        const data = this.data;
+
+        // Hover effects
+        el.addEventListener('mouseenter', () => {
+          if (!isVideoMode && !isTeleporting) {
+            const sphere = el.querySelector('a-sphere');
+            if (sphere) {
+              sphere.setAttribute('scale', '1.2 1.2 1.2');
+            }
+          }
+        });
+
+        el.addEventListener('mouseleave', () => {
+          if (!isVideoMode && !isTeleporting) {
+            const sphere = el.querySelector('a-sphere');
+            if (sphere) {
+              sphere.setAttribute('scale', '1 1 1');
+            }
+          }
+        });
+
+        // Click to activate 360 video
+        el.addEventListener('click', () => {
+          if (!isVideoMode && !isTeleporting) {
+            activateVideoMode(data.videoId, data.audioId, data.title, data.description);
+          }
+        });
+      }
+    });
+
+    // Activate 360 Video Mode
+    function activateVideoMode(videoId, audioId, title, description) {
+      isVideoMode = true;
+
+      // Get elements
+      const videoSphere = document.querySelector('#video-sphere');
+      const villageWorld = document.querySelector('#village-world');
+      const hotspots = document.querySelector('#hotspots');
+      const teleportMarkers = document.querySelector('#teleport-markers');
+      const mainSky = document.querySelector('#main-sky');
+      const ambientLight = document.querySelector('#ambient-light');
+      const hemisphereLight = document.querySelector('#hemisphere-light');
+      const directionalLight = document.querySelector('#directional-light');
+      const directionalLight2 = document.querySelector('#directional-light-2');
+      const villageAudio = document.querySelector('#village-audio-entity');
+      const exitBtn = document.querySelector('#exit-video-btn');
+      const uiOverlay = document.querySelector('#ui-overlay');
+      const clickInstruction = document.querySelector('#click-instruction');
+
+      // Get video and audio
+      const video = document.querySelector(`#${videoId}`);
+      const audio = document.querySelector(`#${audioId}`);
+
+      // Store current media
+      currentVideo = video;
+      currentAudio = audio;
+
+      // Hide ALL scene elements
+      villageWorld.setAttribute('visible', 'false');
+      hotspots.setAttribute('visible', 'false');
+      teleportMarkers.setAttribute('visible', 'false');
+      mainSky.setAttribute('visible', 'false');
+      ambientLight.setAttribute('visible', 'false');
+      hemisphereLight.setAttribute('visible', 'false');
+      directionalLight.setAttribute('visible', 'false');
+      directionalLight2.setAttribute('visible', 'false');
+      clickInstruction.style.display = 'none';
+      
+      // Pause village ambient sound
+      if (villageAudio) {
+        const soundComponent = villageAudio.components.sound;
+        if (soundComponent) soundComponent.pauseSound();
+      }
+
+      const scene = document.querySelector('a-scene');
+      if (scene) {
+        scene.setAttribute('background', 'color: transparent');
+        scene.setAttribute('fog', 'type: none');
+      }
+
+      // Update UI
+      uiOverlay.innerHTML = `
+        <h2>🎥 ${title}</h2>
+        <p>${description}</p>
+        <p style="margin-top: 10px; color: #f39c12;">🎧 Audio narration playing...</p>
+      `;
+      exitBtn.style.display = 'block';
+
+      // Set video source and show sphere
+      videoSphere.setAttribute('src', `#${videoId}`);
+      videoSphere.setAttribute('visible', 'true');
+
+      // Play video and audio
+      setTimeout(() => {
+        video.play().catch(err => {
+          console.log('Video autoplay prevented:', err);
+          document.addEventListener('click', () => {
+            video.play();
+          }, { once: true });
+        });
+
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(err => {
+            console.log('Audio autoplay prevented:', err);
+            document.addEventListener('click', () => {
+              audio.play();
+            }, { once: true });
+          });
+        }
+      }, 300);
+
+      // Smooth camera transition
+      const camera = document.querySelector('#camera');
+      camera.setAttribute('animation', {
+        property: 'rotation',
+        to: '0 0 0',
+        dur: 1000,
+        easing: 'easeInOutQuad'
+      });
+    }
+
+    // Exit Video Mode
+    function exitVideoMode() {
+      if (!isVideoMode) return;
+
+      isVideoMode = false;
+
+      // Get elements
+      const videoSphere = document.querySelector('#video-sphere');
+      const villageWorld = document.querySelector('#village-world');
+      const hotspots = document.querySelector('#hotspots');
+      const teleportMarkers = document.querySelector('#teleport-markers');
+      const mainSky = document.querySelector('#main-sky');
+      const ambientLight = document.querySelector('#ambient-light');
+      const hemisphereLight = document.querySelector('#hemisphere-light');
+      const directionalLight = document.querySelector('#directional-light');
+      const directionalLight2 = document.querySelector('#directional-light-2');
+      const villageAudio = document.querySelector('#village-audio-entity');
+      const exitBtn = document.querySelector('#exit-video-btn');
+      const uiOverlay = document.querySelector('#ui-overlay');
+      const clickInstruction = document.querySelector('#click-instruction');
+
+      // Stop and reset video
+      if (currentVideo) {
+        currentVideo.pause();
+        currentVideo.currentTime = 0;
+      }
+
+      // Stop and reset audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+
+      // Show village world and hide video sphere
+      videoSphere.setAttribute('visible', 'false');
+      villageWorld.setAttribute('visible', 'true');
+      hotspots.setAttribute('visible', 'true');
+      teleportMarkers.setAttribute('visible', 'true');
+      mainSky.setAttribute('visible', 'true');
+      ambientLight.setAttribute('visible', 'true');
+      hemisphereLight.setAttribute('visible', 'true');
+      directionalLight.setAttribute('visible', 'true');
+      directionalLight2.setAttribute('visible', 'true');
+      clickInstruction.style.display = 'block';
+      
+      // Resume village ambient sound
+      if (villageAudio) {
+        const soundComponent = villageAudio.components.sound;
+        if (soundComponent) soundComponent.playSound();
+      }
+
+      const scene = document.querySelector('a-scene');
+      if (scene) {
+        scene.removeAttribute('background');
+        scene.setAttribute('fog', 'type: exponential; color: #c9b899; density: 0.015');
+      }
+
+      // Reset UI
+      uiOverlay.innerHTML = `
+        <h2>🏛️ Saidpur Village VR</h2>
+        <p>Margalla Hills Foothills</p>
+        <p>🎯 Click teleport markers to move</p>
+        <p>👆 Click golden sphere for 360° video</p>
+      `;
+      exitBtn.style.display = 'none';
+
+      // Clear current media
+      currentVideo = null;
+      currentAudio = null;
+    }
+
+    // Scene loaded handler
+    document.querySelector('a-scene').addEventListener('loaded', function () {
+      setTimeout(() => {
+        document.querySelector('#loading-screen').classList.add('hidden');
+      }, 1500);
+
+      // Hide instruction after 8 seconds
+      setTimeout(() => {
+        const instruction = document.querySelector('#click-instruction');
+        if (instruction) {
+          instruction.style.transition = 'opacity 1s ease';
+          instruction.style.opacity = '0';
+          setTimeout(() => {
+            instruction.style.display = 'none';
+          }, 1000);
+        }
+      }, 8000);
+
+      // Show/hide VR controllers based on VR mode
+      const scene = document.querySelector('a-scene');
+      scene.addEventListener('enter-vr', () => {
+        document.querySelector('#left-hand').setAttribute('visible', 'true');
+        document.querySelector('#right-hand').setAttribute('visible', 'true');
+        document.querySelector('#cursor').setAttribute('visible', 'false');
+      });
+
+      scene.addEventListener('exit-vr', () => {
+        document.querySelector('#left-hand').setAttribute('visible', 'false');
+        document.querySelector('#right-hand').setAttribute('visible', 'false');
+        document.querySelector('#cursor').setAttribute('visible', 'true');
+      });
+    });
+
+    // Handle ESC key to exit video mode
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isVideoMode) {
+        exitVideoMode();
+      }
+    });
+
+    // Mobile touch handling
+    document.addEventListener('touchstart', function() {
+      if (isVideoMode && currentVideo && currentVideo.paused) {
+        currentVideo.play();
+      }
+      if (isVideoMode && currentAudio && currentAudio.paused) {
+        currentAudio.play();
+      }
+    }, { once: true });
+
+    // Prevent context menu
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
+  </script>
 </body>
 </html>
