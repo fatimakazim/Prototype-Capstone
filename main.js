@@ -534,4 +534,68 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     console.log('💡 Debug helpers available: window.debugVillageVR');
+    // 1. Gesture Movement Component
+AFRAME.registerComponent('hand-gesture-move', {
+  schema: {
+    rig: { type: 'selector' },
+    speed: { type: 'number', default: 0.05 }
+  },
+
+  init: function () {
+    this.camera = document.querySelector('[camera]');
+    this.direction = new THREE.Vector3();
+  },
+
+  tick: function () {
+    if (!this.el.active || !this.data.rig) return;
+
+    const handPos = this.el.object3D.position;
+    const camPos = this.camera.object3D.position;
+
+    // Calculate vertical offset relative to head
+    const threshold = 0.2; 
+    const diff = handPos.y - camPos.y;
+
+    if (diff > threshold) {
+      // Move Forward
+      this.move(1);
+    } else if (diff < -threshold - 0.1) {
+      // Move Backward
+      this.move(-1);
+    }
+  },
+
+  move: function (dirMultiplier) {
+    const rig = this.data.rig.object3D;
+    // Get the direction the user is looking
+    this.camera.object3D.getWorldDirection(this.direction);
+    // Project direction onto XZ plane (prevent flying/sinking)
+    this.direction.y = 0;
+    this.direction.normalize();
+    
+    rig.position.addScaledVector(this.direction, this.data.speed * dirMultiplier);
+  }
+});
+
+// 2. Pinch Interaction Component
+AFRAME.registerComponent('pinch-to-click', {
+  init: function () {
+    this.el.addEventListener('pinchstarted', (evt) => {
+      // Get the position of the pinch
+      const pinchPos = evt.detail.position;
+      
+      // Find all hotspots
+      const hotspots = document.querySelectorAll('.hotspot');
+      hotspots.forEach(hs => {
+        const hsPos = new THREE.Vector3();
+        hs.object3D.getWorldPosition(hsPos);
+        
+        // Check distance between pinch and hotspot (0.3m threshold)
+        if (pinchPos.distanceTo(hsPos) < 0.3) {
+          hs.emit('click');
+        }
+      });
+    });
+  }
+});
 });
