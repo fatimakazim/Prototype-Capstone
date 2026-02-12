@@ -11,6 +11,9 @@
   <!-- A-Frame Extras for Movement Controls -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   
+  <!-- Super Hands for VR interactions -->
+  <script src="https://cdn.jsdelivr.net/npm/super-hands@3.0.3/dist/super-hands.min.js"></script>
+  
   <style>
     body {
       margin: 0;
@@ -183,7 +186,7 @@
 
       <!-- 360° Videos -->
       <video id="entrance-video" 
-             src="https://ucarecdn.com/fadab25d-0b3a-45f7-8ef5-85318e92a477/" 
+             src="https://hx9v9t89i2.ucarecd.net/eb6e2bc3-c3a4-4622-934e-d2188e3912c4/entrancevideo.MP4" 
              preload="metadata" 
              crossorigin="anonymous" 
              playsinline 
@@ -781,7 +784,7 @@
 
     </a-entity>
 
-    <!-- Camera Rig with VR controls -->
+    <!-- Camera Rig with VR hand tracking -->
     <a-entity id="camera-rig" position="0 0 5">
       <a-entity 
         id="camera"
@@ -790,24 +793,7 @@
         look-controls="pointerLockEnabled: false"
         wasd-controls="enabled: false">
         
-        <!-- VR Controllers -->
-        <a-entity 
-          id="left-hand"
-          laser-controls="hand: left"
-          raycaster="objects: .teleport-marker, .hotspot; far: 20"
-          line="color: #f39c12; opacity: 0.75"
-          visible="false">
-        </a-entity>
-        
-        <a-entity 
-          id="right-hand"
-          laser-controls="hand: right"
-          raycaster="objects: .teleport-marker, .hotspot; far: 20"
-          line="color: #f39c12; opacity: 0.75"
-          visible="false">
-        </a-entity>
-
-        <!-- Cursor for non-VR interaction -->
+        <!-- Desktop Cursor for non-VR interaction -->
         <a-entity 
           id="cursor"
           cursor="fuse: true; fuseTimeout: 500"
@@ -819,6 +805,51 @@
           animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.5 0.5 0.5; dur: 500; easing: easeInCubic"
           animation__mouseleave="property: scale; startEvents: mouseleave; to: 1 1 1; dur: 150; easing: easeInCubic">
         </a-entity>
+      </a-entity>
+
+      <!-- Left Hand VR Controller with Hand Tracking -->
+      <a-entity 
+        id="left-hand"
+        hand-tracking-controls="hand: left; modelColor: #f39c12"
+        hand-raycast="objects: .teleport-marker, .hotspot"
+        visible="false">
+        <!-- Visual ray for hand -->
+        <a-entity 
+          line="start: 0 0 0; end: 0 0 -5; color: #f39c12; opacity: 0.6"
+          visible="false"
+          class="hand-ray">
+        </a-entity>
+      </a-entity>
+
+      <!-- Right Hand VR Controller with Hand Tracking -->
+      <a-entity 
+        id="right-hand"
+        hand-tracking-controls="hand: right; modelColor: #f39c12"
+        hand-raycast="objects: .teleport-marker, .hotspot"
+        visible="false">
+        <!-- Visual ray for hand -->
+        <a-entity 
+          line="start: 0 0 0; end: 0 0 -5; color: #f39c12; opacity: 0.6"
+          visible="false"
+          class="hand-ray">
+        </a-entity>
+      </a-entity>
+
+      <!-- Fallback VR Controllers (for headsets without hand tracking) -->
+      <a-entity 
+        id="left-controller"
+        laser-controls="hand: left"
+        raycaster="objects: .teleport-marker, .hotspot; far: 20; showLine: true"
+        line="color: #f39c12; opacity: 0.75"
+        visible="false">
+      </a-entity>
+      
+      <a-entity 
+        id="right-controller"
+        laser-controls="hand: right"
+        raycaster="objects: .teleport-marker, .hotspot; far: 20; showLine: true"
+        line="color: #f39c12; opacity: 0.75"
+        visible="false">
       </a-entity>
     </a-entity>
 
@@ -840,6 +871,97 @@
     let currentVideo = null;
     let isTeleporting = false;
 
+    // HAND TRACKING RAYCAST COMPONENT
+    AFRAME.registerComponent('hand-raycast', {
+      schema: {
+        objects: { type: 'string', default: '.clickable' }
+      },
+
+      init: function () {
+        const el = this.el;
+        const data = this.data;
+        
+        this.raycaster = new THREE.Raycaster();
+        this.direction = new THREE.Vector3(0, 0, -1);
+        this.isPinching = false;
+        this.lastPinchState = false;
+        this.intersectedEl = null;
+        
+        // Get the hand ray visual
+        this.handRay = el.querySelector('.hand-ray');
+        
+        // Listen for pinch events
+        el.addEventListener('pinchstarted', (evt) => {
+          this.isPinching = true;
+          console.log('Pinch started');
+          if (this.handRay) this.handRay.setAttribute('visible', 'true');
+          
+          // Trigger click on intersected element
+          if (this.intersectedEl) {
+            console.log('Clicking element:', this.intersectedEl);
+            this.intersectedEl.emit('click');
+          }
+        });
+
+        el.addEventListener('pinchended', (evt) => {
+          this.isPinching = false;
+          console.log('Pinch ended');
+          if (this.handRay) this.handRay.setAttribute('visible', 'false');
+        });
+      },
+
+      tick: function () {
+        const el = this.el;
+        const sceneEl = el.sceneEl;
+        
+        if (!el.object3D) return;
+
+        // Update raycaster
+        const handPos = new THREE.Vector3();
+        const handQuat = new THREE.Quaternion();
+        el.object3D.getWorldPosition(handPos);
+        el.object3D.getWorldQuaternion(handQuat);
+        
+        const direction = this.direction.clone();
+        direction.applyQuaternion(handQuat);
+        
+        this.raycaster.set(handPos, direction);
+        this.raycaster.far = 20;
+
+        // Get all target objects
+        const targets = Array.from(document.querySelectorAll(this.data.objects))
+          .map(el => el.object3D)
+          .filter(obj => obj);
+
+        // Check intersections
+        const intersects = this.raycaster.intersectObjects(targets, true);
+        
+        // Find the closest interactive parent
+        let newIntersectedEl = null;
+        if (intersects.length > 0) {
+          let obj = intersects[0].object;
+          while (obj) {
+            if (obj.el && (obj.el.classList.contains('teleport-marker') || obj.el.classList.contains('hotspot'))) {
+              newIntersectedEl = obj.el;
+              break;
+            }
+            obj = obj.parent;
+          }
+        }
+
+        // Handle hover states
+        if (newIntersectedEl !== this.intersectedEl) {
+          if (this.intersectedEl) {
+            this.intersectedEl.emit('mouseleave');
+          }
+          if (newIntersectedEl) {
+            newIntersectedEl.emit('mouseenter');
+          }
+          this.intersectedEl = newIntersectedEl;
+        }
+      }
+    });
+
     // Teleport Target Component
     AFRAME.registerComponent('teleport-target', {
       init: function () {
@@ -853,6 +975,7 @@
             const ring = el.querySelector('a-ring');
             if (cylinder) cylinder.setAttribute('material', 'opacity', '0.95');
             if (ring) ring.setAttribute('material', 'opacity', '1.0');
+            console.log('Hovering over:', label);
           }
         });
 
@@ -867,6 +990,7 @@
 
         // Click to teleport
         el.addEventListener('click', () => {
+          console.log('Teleport marker clicked:', label);
           if (!isVideoMode && !isTeleporting) {
             teleportTo(el.object3D.position, label);
           }
@@ -953,6 +1077,7 @@
             if (sphere) {
               sphere.setAttribute('scale', '1.2 1.2 1.2');
             }
+            console.log('Hovering over hotspot:', data.title);
           }
         });
 
@@ -967,6 +1092,7 @@
 
         // Click to activate 360 video
         el.addEventListener('click', () => {
+          console.log('Hotspot clicked:', data.title);
           if (!isVideoMode && !isTeleporting) {
             activateVideoMode(data.videoId, data.audioId, data.title, data.description);
           }
@@ -1155,18 +1281,49 @@
         }
       }, 8000);
 
-      // Show/hide VR controllers based on VR mode
+      // Handle VR mode changes
       const scene = document.querySelector('a-scene');
+      
       scene.addEventListener('enter-vr', () => {
-        document.querySelector('#left-hand').setAttribute('visible', 'true');
-        document.querySelector('#right-hand').setAttribute('visible', 'true');
-        document.querySelector('#cursor').setAttribute('visible', 'false');
+        console.log('Entering VR mode');
+        
+        // Hide desktop cursor
+        const cursor = document.querySelector('#cursor');
+        if (cursor) cursor.setAttribute('visible', 'false');
+        
+        // Show hand tracking
+        const leftHand = document.querySelector('#left-hand');
+        const rightHand = document.querySelector('#right-hand');
+        if (leftHand) leftHand.setAttribute('visible', 'true');
+        if (rightHand) rightHand.setAttribute('visible', 'true');
+        
+        // Show fallback controllers (they auto-hide if hand tracking is available)
+        const leftController = document.querySelector('#left-controller');
+        const rightController = document.querySelector('#right-controller');
+        if (leftController) leftController.setAttribute('visible', 'true');
+        if (rightController) rightController.setAttribute('visible', 'true');
+        
+        console.log('VR hands and controllers enabled');
       });
 
       scene.addEventListener('exit-vr', () => {
-        document.querySelector('#left-hand').setAttribute('visible', 'false');
-        document.querySelector('#right-hand').setAttribute('visible', 'false');
-        document.querySelector('#cursor').setAttribute('visible', 'true');
+        console.log('Exiting VR mode');
+        
+        // Show desktop cursor
+        const cursor = document.querySelector('#cursor');
+        if (cursor) cursor.setAttribute('visible', 'true');
+        
+        // Hide hand tracking
+        const leftHand = document.querySelector('#left-hand');
+        const rightHand = document.querySelector('#right-hand');
+        if (leftHand) leftHand.setAttribute('visible', 'false');
+        if (rightHand) rightHand.setAttribute('visible', 'false');
+        
+        // Hide controllers
+        const leftController = document.querySelector('#left-controller');
+        const rightController = document.querySelector('#right-controller');
+        if (leftController) leftController.setAttribute('visible', 'false');
+        if (rightController) rightController.setAttribute('visible', 'false');
       });
     });
 
