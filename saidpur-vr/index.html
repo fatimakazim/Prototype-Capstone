@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saidpur — A Partition Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/global.css" />
+  <style>
+    /* ── Landing-specific styles ─────────────────────────── */
+    body {
+      background: #04040a;
+      color: #e8dcc8;
+      font-family: 'Cormorant Garamond', serif;
+      margin: 0;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Animated grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.4;
+    }
+
+    /* Radcliffe Line — a single red horizontal rule */
+    .radcliffe-line {
+      position: fixed;
+      top: 50%;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #c0392b 20%, #c0392b 80%, transparent);
+      animation: drawLine 3s ease-out 1s forwards;
+      z-index: 1;
+    }
+    @keyframes drawLine {
+      to { width: 100%; }
+    }
+
+    .hero {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 680px;
+      padding: 0 2rem;
+      opacity: 0;
+      animation: fadeUp 1.6s ease-out 0.4s forwards;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .year-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      color: #c0392b;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-weight: 300;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1.05;
+      margin: 0 0 0.3em;
+      letter-spacing: -0.01em;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: #b8a882;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      font-weight: 300;
+      line-height: 1.7;
+      color: #9a8e7a;
+      max-width: 480px;
+      margin: 0 auto 3rem;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #04040a;
+      background: #e8dcc8;
+      border: none;
+      padding: 0.9rem 2.2rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-primary:hover {
+      background: #c0392b;
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #9a8e7a;
+      background: transparent;
+      border: 1px solid #3a3428;
+      padding: 0.9rem 2.2rem;
+      cursor: pointer;
+      transition: border-color 0.3s, color 0.3s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-secondary:hover { border-color: #9a8e7a; color: #e8dcc8; }
+
+    /* Floating stat counters */
+    .stats-bar {
+      position: fixed;
+      bottom: 2rem;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      z-index: 10;
+      opacity: 0;
+      animation: fadeUp 1s ease-out 2s forwards;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.5rem;
+      color: #c0392b;
+      display: block;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: #5a5040;
+      letter-spacing: 0.1em;
+    }
+
+    /* Particle canvas behind everything */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.35;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-canvas"></canvas>
+  <div class="radcliffe-line"></div>
+
+  <main class="hero">
+    <p class="year-label">August 14–15, 1947 &nbsp;·&nbsp; Pakistan / India</p>
+    <h1>Saidpur<br><em>A Partition Memory</em></h1>
+    <p class="subtitle">
+      An immersive VR micro-site exploring how displacement and religious erasure
+      are embedded in one village's architecture and landscape.
+    </p>
+    <div class="cta-group">
+      <a href="scenes/briefing-scene.html" class="btn-primary">Begin Experience</a>
+      <a href="scenes/map-table-scene.html" class="btn-secondary">Skip to VR</a>
+    </div>
+  </main>
+
+  <footer class="stats-bar">
+    <div class="stat">
+      <span class="stat-number">14–15M</span>
+      <span class="stat-label">people displaced</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">36 days</span>
+      <span class="stat-label">to draw the border</span>
+    </div>
+    <div class="stat">
+      <span class="stat-number">500k–2M</span>
+      <span class="stat-label">lives lost</span>
+    </div>
+  </footer>
+
+  <script>
+    // ── Minimal background particle system (landing page only) ──
+    // Represents displaced people drifting across the subcontinent.
+    const canvas = document.getElementById('particle-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, particles = [];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function createParticles(count = 180) {
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        const isMuslim = Math.random() > 0.5;
+        particles.push({
+          x:    Math.random() * W,
+          y:    Math.random() * H,
+          vx:   isMuslim ? -(0.1 + Math.random() * 0.3) : (0.1 + Math.random() * 0.3),
+          vy:   (Math.random() - 0.5) * 0.15,
+          r:    0.8 + Math.random() * 1.2,
+          // amber for Hindu/Sikh westward flight, blue for Muslim eastward
+          color: isMuslim ? 'rgba(96,160,220,0.6)' : 'rgba(192,100,60,0.6)'
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        // Wrap around screen edges
+        if (p.x < 0)  p.x = W;
+        if (p.x > W)  p.x = 0;
+        if (p.y < 0)  p.y = H;
+        if (p.y > H)  p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+
+    resize();
+    createParticles();
+    animateParticles();
+    window.addEventListener('resize', () => { resize(); createParticles(); });
+  </script>
+</body>
+</html>

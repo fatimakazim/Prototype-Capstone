@@ -1,0 +1,132 @@
+{
+  "_comment": "timeline-data.json — Key events leading to and following the 1947 Partition. PLACEHOLDER DATA. Descriptions are summaries — replace with thoroughly researched historical content.",
+
+  "events": [
+    {
+      "year": 1857,
+      "title": "Indian Rebellion",
+      "type": "violence",
+      "significant": false,
+      "affected": 0,
+      "description": "The 1857 Rebellion against the British East India Company. After its suppression, direct Crown rule (the British Raj) was imposed. British 'divide and rule' policies hardened communal identities.",
+      "wikimediaImage": "PLACEHOLDER — search Wikimedia Commons: 'Indian rebellion 1857'"
+    },
+    {
+      "year": 1885,
+      "title": "Indian National Congress Founded",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "The INC was founded in Bombay as the first modern nationalist political organisation in India, initially dominated by English-educated elite seeking greater representation.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1905,
+      "title": "First Partition of Bengal",
+      "type": "partition",
+      "significant": true,
+      "affected": 85000000,
+      "description": "Lord Curzon divided Bengal into Hindu-majority West Bengal and Muslim-majority East Bengal. Mass protests and the Swadeshi movement followed. The partition was reversed in 1911 — but the communal template had been set.",
+      "wikimediaImage": "PLACEHOLDER — search: 'Partition of Bengal 1905'"
+    },
+    {
+      "year": 1906,
+      "title": "Muslim League Founded",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "The All India Muslim League was founded in Dhaka. Initially loyal to the Crown, it would become the vehicle for Pakistan's creation under Muhammad Ali Jinnah.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1919,
+      "title": "Amritsar Massacre",
+      "type": "violence",
+      "significant": true,
+      "affected": 379,
+      "description": "On April 13, 1919, British troops under General Dyer opened fire on a peaceful crowd at Jallianwala Bagh in Amritsar. Official count: 379 killed. Unofficial estimates: over 1,000. The event galvanised the independence movement.",
+      "wikimediaImage": "PLACEHOLDER — search: 'Jallianwala Bagh 1919'"
+    },
+    {
+      "year": 1930,
+      "title": "Salt March",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "Gandhi led the 240-mile Dandi Salt March to protest British salt taxes. The resulting civil disobedience campaign brought international attention and mass arrests.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1937,
+      "title": "Provincial Elections",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "INC won landslide in provincial elections but failed to include Muslim League in coalition governments. This convinced Jinnah that Muslims' interests could only be protected in a separate state.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1940,
+      "title": "Lahore Resolution",
+      "type": "political",
+      "significant": true,
+      "affected": 0,
+      "description": "The Muslim League's Lahore Resolution formally demanded 'independent states' for Muslim-majority regions. This is considered the founding document of the Pakistan movement.",
+      "wikimediaImage": "PLACEHOLDER — search: 'Lahore Resolution 1940'"
+    },
+    {
+      "year": 1942,
+      "title": "Quit India Movement",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "Gandhi launched the Quit India movement demanding immediate British withdrawal. Mass arrests followed. The British imprisoned virtually the entire INC leadership.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1946,
+      "title": "Direct Action Day / Calcutta Killings",
+      "type": "violence",
+      "significant": true,
+      "affected": 4000,
+      "description": "August 16, 1946: the Muslim League's Direct Action Day triggered four days of communal massacres in Calcutta. Estimates: 4,000–10,000 killed. The violence foreshadowed the Partition massacres a year later.",
+      "wikimediaImage": "PLACEHOLDER — search: 'Great Calcutta Killings 1946'"
+    },
+    {
+      "year": 1947,
+      "title": "Independence & Partition",
+      "type": "partition",
+      "significant": true,
+      "affected": 15000000,
+      "description": "August 14–15, 1947. Pakistan and India became independent nations. The Radcliffe Line — drawn in 36 days — divided Punjab and Bengal. 14–15 million people were displaced. Between 500,000 and 2 million were killed in communal violence. Saidpur's entire Hindu and Sikh population fled.",
+      "wikimediaImage": "PLACEHOLDER — search: 'Partition India 1947 refugees Punjab'"
+    },
+    {
+      "year": 1947,
+      "title": "Saidpur: Population Replacement",
+      "type": "saidpur",
+      "significant": true,
+      "affected": 0,
+      "description": "In Saidpur village (near Rawalpindi, now in Pakistan), the Hindu and Sikh residents — who had been there for generations — fled overnight. Muslim refugee families from East Punjab moved into their homes, temples, and businesses.",
+      "wikimediaImage": "PLACEHOLDER — Replace with archival photograph of Saidpur"
+    },
+    {
+      "year": 1948,
+      "title": "Gandhi Assassinated / Kashmir War",
+      "type": "violence",
+      "significant": true,
+      "affected": 0,
+      "description": "January 30, 1948: Mahatma Gandhi was assassinated by Nathuram Godse. The First Kashmir War between India and Pakistan began in October 1947 and ended with a UN ceasefire in January 1949.",
+      "wikimediaImage": "PLACEHOLDER"
+    },
+    {
+      "year": 1950,
+      "title": "Nehru-Liaquat Pact",
+      "type": "political",
+      "significant": false,
+      "affected": 0,
+      "description": "The April 1950 pact between India and Pakistan aimed to protect minorities in both countries. It slowed but did not stop migration from East Bengal. Largely ineffective on the ground in Punjab.",
+      "wikimediaImage": "PLACEHOLDER"
+    }
+  ]
+}

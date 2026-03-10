@@ -1,0 +1,124 @@
+{
+  "_comment": "migration-data.json — Partition of British India 1947. PLACEHOLDER DATA. Replace with verified historical figures from primary sources (Schechtman 1963, 1951 Census of India, 1951 Pakistan Census). All population figures are approximations.",
+
+  "metadata": {
+    "event": "Partition of British India",
+    "dates": "August–December 1947",
+    "totalDisplaced": 15000000,
+    "estimatedKilled": { "low": 500000, "high": 2000000 },
+    "sources": [
+      "Schechtman, J.B. (1963). The Refugee in the World.",
+      "1951 Census of India",
+      "1951 Census of Pakistan",
+      "Brass, P. (2003). The Production of Hindu-Muslim Violence in Contemporary India."
+    ]
+  },
+
+  "regions": [
+    {
+      "id": "west-punjab",
+      "name": "West Punjab / East Punjab",
+      "description": "The most violent zone of displacement. Lahore went to Pakistan; Amritsar stayed in India. The Radcliffe Line divided communities that had coexisted for centuries.",
+      "displaced": {
+        "muslimsToPakistan": 5500000,
+        "hindusSikhsToIndia": 4700000
+      }
+    },
+    {
+      "id": "east-bengal",
+      "name": "East Bengal / West Bengal",
+      "description": "Bengal was divided between Pakistan (East Bengal / later Bangladesh) and India (West Bengal). Calcutta remained in India; Dhaka became the capital of East Pakistan.",
+      "displaced": {
+        "muslimsToEastPakistan": 700000,
+        "hindusSikhsToIndia": 1300000
+      }
+    },
+    {
+      "id": "sindh",
+      "name": "Sindh",
+      "description": "Karachi became Pakistan's first capital. Most of Sindh's Hindu merchant class — who had dominated trade for generations — fled to Bombay.",
+      "displaced": {
+        "hindusToBombay": 1200000
+      }
+    }
+  ],
+
+  "cities": [
+    { "name": "Lahore",    "country": "Pakistan", "svgX": 310, "svgY": 165, "lat": 31.55, "lng": 74.34 },
+    { "name": "Amritsar",  "country": "India",    "svgX": 360, "svgY": 168, "lat": 31.63, "lng": 74.87 },
+    { "name": "Delhi",     "country": "India",    "svgX": 400, "svgY": 240, "lat": 28.70, "lng": 77.10 },
+    { "name": "Karachi",   "country": "Pakistan", "svgX": 215, "svgY": 310, "lat": 24.86, "lng": 67.01 },
+    { "name": "Dhaka",     "country": "Pakistan", "svgX": 610, "svgY": 280, "lat": 23.81, "lng": 90.41 },
+    { "name": "Calcutta",  "country": "India",    "svgX": 580, "svgY": 310, "lat": 22.57, "lng": 88.36 },
+    { "name": "Saidpur",   "country": "Pakistan", "svgX": 368, "svgY": 148, "lat": 33.60, "lng": 73.06,
+      "note": "Hill station NW of Rawalpindi. Hindu/Sikh population fled Aug 1947." }
+  ],
+
+  "flows": [
+    {
+      "id": "w-punjab-hindu-sikh",
+      "fromCity": "Lahore",
+      "toCity":   "Amritsar",
+      "type":     "hindu",
+      "description": "Hindu and Sikh families fleeing West Punjab toward India",
+      "count":    4700000,
+      "startMonth": "1947-08",
+      "endMonth":   "1947-11",
+      "fromX": 310, "fromY": 165,
+      "toX":   360, "toY":   168,
+      "arc":   80
+    },
+    {
+      "id": "w-punjab-muslim",
+      "fromCity": "Amritsar",
+      "toCity":   "Lahore",
+      "type":     "muslim",
+      "description": "Muslim families fleeing East Punjab toward Pakistan",
+      "count":    5500000,
+      "startMonth": "1947-08",
+      "endMonth":   "1947-12",
+      "fromX": 360, "fromY": 168,
+      "toX":   310, "toY":   165,
+      "arc":   80
+    },
+    {
+      "id": "e-bengal-hindu",
+      "fromCity": "Dhaka",
+      "toCity":   "Calcutta",
+      "type":     "hindu",
+      "description": "Hindu families from East Bengal moving to West Bengal",
+      "count":    1300000,
+      "startMonth": "1947-08",
+      "endMonth":   "1948-06",
+      "fromX": 610, "fromY": 280,
+      "toX":   580, "toY":   310,
+      "arc":   40
+    },
+    {
+      "id": "e-bengal-muslim",
+      "fromCity": "Calcutta",
+      "toCity":   "Dhaka",
+      "type":     "muslim",
+      "description": "Muslim families from West Bengal moving to East Pakistan",
+      "count":    700000,
+      "startMonth": "1947-09",
+      "endMonth":   "1948-06",
+      "fromX": 580, "fromY": 310,
+      "toX":   610, "toY":   280,
+      "arc":   40
+    },
+    {
+      "id": "sindh-hindu",
+      "fromCity": "Karachi",
+      "toCity":   "Delhi",
+      "type":     "hindu",
+      "description": "Hindu merchants and traders leaving Karachi and Sindh for Bombay/Delhi",
+      "count":    1200000,
+      "startMonth": "1947-08",
+      "endMonth":   "1948-03",
+      "fromX": 215, "fromY": 310,
+      "toX":   400, "toY":   240,
+      "arc":   120
+    }
+  ]
+}

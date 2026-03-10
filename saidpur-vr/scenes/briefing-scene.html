@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historical Briefing — Saidpur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles/global.css" />
+
+  <!-- A-Frame for the 3D holographic briefing chamber -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+
+  <style>
+    body { margin: 0; background: #04040a; overflow: hidden; }
+
+    /* ── 2D overlay UI on top of the A-Frame canvas ── */
+    #briefing-ui {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 2.5rem;
+    }
+
+    #chapter-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      color: #c0392b;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      opacity: 0;
+      animation: fadeIn 1s ease 1.5s forwards;
+    }
+
+    #chapter-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: #e8dcc8;
+      text-align: center;
+      margin: 0 0 2rem;
+      opacity: 0;
+      animation: fadeIn 1.2s ease 1.8s forwards;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 0.75rem;
+      pointer-events: all;
+      opacity: 0;
+      animation: fadeIn 1s ease 2.4s forwards;
+    }
+
+    .pill {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 0.6rem 1.4rem;
+      border: 1px solid rgba(192,57,43,0.4);
+      color: #9a8e7a;
+      background: rgba(4,4,10,0.7);
+      transition: all 0.3s;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .pill:hover, .pill.active {
+      border-color: #c0392b;
+      color: #e8dcc8;
+      background: rgba(192,57,43,0.15);
+    }
+    .pill-primary {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: #fff;
+    }
+    .pill-primary:hover {
+      background: #a93226;
+      color: #fff;
+    }
+
+    /* stat counter strip */
+    #stat-strip {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4rem;
+      background: rgba(4,4,10,0.9);
+      border-bottom: 1px solid #1e1c16;
+      z-index: 600;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: #5a5040;
+    }
+    .stat-item { display: flex; gap: 0.6rem; align-items: center; }
+    .stat-val  { color: #c0392b; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Statistics strip ── -->
+  <div id="stat-strip">
+    <span class="stat-item"><span class="stat-val">14–15 MILLION</span> DISPLACED</span>
+    <span class="stat-item"><span class="stat-val">36 DAYS</span> TO DRAW THE LINE</span>
+    <span class="stat-item"><span class="stat-val">500K–2M</span> KILLED</span>
+    <span class="stat-item"><span class="stat-val">1947</span> PARTITION OF SOUTH ASIA</span>
+  </div>
+
+  <!-- ── Chapter title overlay ── -->
+  <div id="briefing-ui">
+    <p id="chapter-label">Chapter 01 — Historical Context</p>
+    <h2 id="chapter-title">The Briefing Chamber</h2>
+    <div class="nav-pills">
+      <a class="pill active" onclick="showPanel('statistics')">Statistics</a>
+      <a class="pill" onclick="showPanel('timeline')">Timeline</a>
+      <a class="pill" onclick="showPanel('testimonies')">Testimonies</a>
+      <a class="pill" href="map-table-scene.html">— —</a>
+      <a class="pill pill-primary" href="map-table-scene.html">Enter VR →</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       A-FRAME SCENE — Holographic Briefing Chamber
+       Dark void with floating data panels and particle system.
+  ══════════════════════════════════════════════════════ -->
+  <a-scene
+    renderer="antialias: true; colorManagement: true"
+    cursor="rayOrigin: mouse"
+    raycaster="objects: .clickable"
+    vr-mode-ui="enabled: false"
+    background="color: #02020a">
+
+    <a-assets>
+      <!-- Placeholder: replace with real archival images -->
+      <img id="panel-bg-tex"   src="../assets/images/placeholder-panel-bg.png"   crossorigin="anonymous" />
+      <img id="archive-img-01" src="../assets/images/placeholder-archive-01.jpg" crossorigin="anonymous" />
+      <img id="archive-img-02" src="../assets/images/placeholder-archive-02.jpg" crossorigin="anonymous" />
+    </a-assets>
+
+    <!-- ── Lighting ── -->
+    <a-light type="ambient"     color="#0d0d1a" intensity="2"></a-light>
+    <a-light type="point" color="#4060c0" intensity="1.8" distance="15" position="0 4 0"></a-light>
+    <a-light type="point" color="#c04030" intensity="1.2" distance="8"  position="0 1 -4"></a-light>
+
+    <!-- ── Floor — obsidian reflective plane ── -->
+    <a-plane rotation="-90 0 0" width="40" height="40"
+             material="color: #050510; metalness: 0.95; roughness: 0.05; envMapIntensity: 0.4">
+    </a-plane>
+
+    <!-- ── Particle Migration System ── -->
+    <a-entity id="migration-particles" partition-particles position="0 0 0"></a-entity>
+
+    <!-- ── Radcliffe Line — glowing red line on floor ── -->
+    <a-box position="0 0.005 0"
+           width="0.03" height="0.01" depth="30"
+           material="color: #c0392b; emissive: #c0392b; emissiveIntensity: 2.5">
+    </a-box>
+    <a-text value="RADCLIFFE LINE — 1947"
+            position="0.2 0.05 2" rotation="0 -90 0"
+            color="#c0392b" width="2" font="mozillavr" align="left">
+    </a-text>
+
+    <!-- ══════════════════════
+         PANEL 1 — Statistics
+    ══════════════════════ -->
+    <a-entity id="panel-statistics" position="-3.5 1.8 -4" rotation="0 30 0">
+      <!-- Panel background -->
+      <a-plane width="2.4" height="3.2"
+               material="color: #080812; opacity: 0.92; transparent: true; side: double">
+      </a-plane>
+      <!-- Top accent bar -->
+      <a-box position="0 1.55 0.01" width="2.4" height="0.06" depth="0.01"
+             material="color: #c0392b; emissive: #c0392b; emissiveIntensity: 1">
+      </a-box>
+      <!-- Panel title -->
+      <a-text value="DISPLACEMENT STATISTICS"
+              position="-1.05 1.3 0.02"
+              color="#c0392b" width="2.1" font="mozillavr" align="left">
+      </a-text>
+
+      <!-- Stat rows — replace placeholder values with real data -->
+      <a-text value="14–15 MILLION displaced (1947)"  position="-1.05  0.9 0.02" color="#e8dcc8" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="500,000–2M killed in violence"   position="-1.05  0.55 0.02" color="#e8dcc8" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="West Punjab: 5.5M Muslims →"     position="-1.05  0.2 0.02" color="#6090d0" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="← 4.7M Hindus &amp; Sikhs"      position="-1.05 -0.1 0.02" color="#c0643c" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="East Bengal: 1.3M displaced"     position="-1.05 -0.4 0.02" color="#e8dcc8" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="Saidpur: 90%+ population"        position="-1.05 -0.7 0.02" color="#e8dcc8" width="2.0" font="mozillavr" align="left"></a-text>
+      <a-text value="replaced overnight"              position="-1.05 -0.95 0.02" color="#b8a882" width="2.0" font="mozillavr" align="left"></a-text>
+
+      <!-- PLACEHOLDER: replace with archival image -->
+      <a-plane position="0 -1.3 0.02" width="2.0" height="0.9"
+               material="color: #1a1a2a; opacity: 0.8">
+      </a-plane>
+      <a-text value="[ ARCHIVAL IMAGE PLACEHOLDER ]&#10;Replace with historical photograph"
+              position="0 -1.3 0.03" color="#3a3a5a" width="1.8" align="center" font="mozillavr">
+      </a-text>
+    </a-entity>
+
+
+    <!-- ══════════════════════
+         PANEL 2 — Timeline
+    ══════════════════════ -->
+    <a-entity id="panel-timeline" position="0 1.8 -5.5">
+      <a-plane width="4.5" height="2.8"
+               material="color: #080812; opacity: 0.92; transparent: true; side: double">
+      </a-plane>
+      <!-- accent bar -->
+      <a-box position="0 1.35 0.01" width="4.5" height="0.06" depth="0.01"
+             material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 0.8">
+      </a-box>
+      <a-text value="KEY EVENTS  1905 – 1950"
+              position="-2.1 1.1 0.02" color="#d4a843" width="4.2" font="mozillavr" align="left">
+      </a-text>
+
+      <!-- Timeline entries — replace with real data from timeline-data.json -->
+      <a-text value="1905  Bengal Partition (annulled 1911)"     position="-2.1  0.75 0.02" color="#9a8e7a" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1919  Amritsar Massacre — Jallianwala Bagh" position="-2.1  0.45 0.02" color="#9a8e7a" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1940  Lahore Resolution — Muslim League"    position="-2.1  0.15 0.02" color="#9a8e7a" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1947  Independence &amp; Partition, Aug 14–15" position="-2.1 -0.15 0.02" color="#c0392b" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1947  Mass displacement — Punjab &amp; Bengal" position="-2.1 -0.45 0.02" color="#c0392b" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1948  First Kashmir War"                    position="-2.1 -0.75 0.02" color="#9a8e7a" width="4.0" font="mozillavr" align="left"></a-text>
+      <a-text value="1948  Saidpur mosques built on temple sites" position="-2.1 -1.05 0.02" color="#b8a882" width="4.0" font="mozillavr" align="left"></a-text>
+
+      <!-- Timeline bar visual -->
+      <a-box position="0 -1.2 0.02" width="4.2" height="0.02" depth="0.01"
+             material="color: #2a2418; emissive: #2a2418">
+      </a-box>
+      <!-- Timeline markers -->
+      <a-sphere position="-2.0 -1.2 0.03" radius="0.04" material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 1"></a-sphere>
+      <a-sphere position="-1.1 -1.2 0.03" radius="0.04" material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 1"></a-sphere>
+      <a-sphere position="-0.2 -1.2 0.03" radius="0.04" material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 1"></a-sphere>
+      <a-sphere position=" 0.9 -1.2 0.03" radius="0.06" material="color: #c0392b; emissive: #c0392b; emissiveIntensity: 2"
+                animation="property: scale; from: 1 1 1; to: 1.5 1.5 1.5; dir: alternate; dur: 700; loop: true">
+      </a-sphere>
+      <a-sphere position=" 1.8 -1.2 0.03" radius="0.04" material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 1"></a-sphere>
+    </a-entity>
+
+
+    <!-- ══════════════════════
+         PANEL 3 — Testimony
+    ══════════════════════ -->
+    <a-entity id="panel-testimony" position="3.5 1.8 -4" rotation="0 -30 0">
+      <a-plane width="2.4" height="3.2"
+               material="color: #080812; opacity: 0.92; transparent: true; side: double">
+      </a-plane>
+      <a-box position="0 1.55 0.01" width="2.4" height="0.06" depth="0.01"
+             material="color: #6090d0; emissive: #6090d0; emissiveIntensity: 0.8">
+      </a-box>
+      <a-text value="SURVIVOR TESTIMONY"
+              position="-1.05 1.3 0.02" color="#6090d0" width="2.1" font="mozillavr" align="left">
+      </a-text>
+
+      <!-- PLACEHOLDER testimony text — replace with real oral history excerpts -->
+      <a-text value="&quot;We left everything. In one night,&#10;the street we had known for&#10;generations became foreign.&quot;"
+              position="0 0.7 0.02" color="#e8dcc8" width="2.1" align="center" font="mozillavr">
+      </a-text>
+      <a-text value="— Placeholder Testimony&#10;   Replace with real oral history"
+              position="0 -0.05 0.02" color="#5a5040" width="2.0" align="center" font="mozillavr">
+      </a-text>
+
+      <!-- Audio play button placeholder -->
+      <a-cylinder class="clickable" id="play-btn"
+                  position="0 -0.65 0.02"
+                  radius="0.28" height="0.08"
+                  material="color: #6090d0; emissive: #6090d0; emissiveIntensity: 0.6; opacity: 0.8; transparent: true"
+                  animation__hover="property: material.emissiveIntensity; to: 1.4; dur: 200; startEvents: mouseenter"
+                  animation__unhover="property: material.emissiveIntensity; to: 0.6; dur: 200; startEvents: mouseleave">
+      </a-cylinder>
+      <a-text value="▶  PLAY TESTIMONY"
+              position="0 -0.64 0.05" color="#ffffff" width="1.4" align="center" font="mozillavr">
+      </a-text>
+
+      <!-- Source note -->
+      <a-text value="Source: The 1947 Partition Archive&#10;www.1947partitionarchive.org&#10;&#10;[ Embed real audio testimony here ]"
+              position="0 -1.2 0.02" color="#3a3a5a" width="2.1" align="center" font="mozillavr">
+      </a-text>
+    </a-entity>
+
+
+    <!-- ══════════════════════
+         HOLOGRAPHIC MAP PLACEHOLDER
+    ══════════════════════ -->
+    <a-entity position="0 0.02 0">
+      <!-- Map surface — replace texture with real georeferenced map -->
+      <a-plane rotation="-90 0 0" width="5" height="4"
+               material="color: #0a1020; opacity: 0.9; transparent: true; metalness: 0.8; roughness: 0.2">
+      </a-plane>
+      <!-- Grid lines suggesting a map -->
+      <a-entity position="0 0.005 0">
+        <a-box width="5" height="0.004" depth="0.008" position="0 0 -1.2" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+        <a-box width="5" height="0.004" depth="0.008" position="0 0  0.0" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+        <a-box width="5" height="0.004" depth="0.008" position="0 0  1.2" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+        <a-box width="0.008" height="0.004" depth="4" position="-1.6 0 0" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+        <a-box width="0.008" height="0.004" depth="4" position=" 0.0 0 0" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+        <a-box width="0.008" height="0.004" depth="4" position=" 1.6 0 0" material="color: #1a2840; emissive: #1a2840; emissiveIntensity: 1"></a-box>
+      </a-entity>
+      <a-text value="[ HOLOGRAPHIC MAP PLACEHOLDER ]&#10;Replace with Deck.gl / D3 map canvas texture&#10;See visualizations/migration-map.js"
+              position="0 0.02 0" rotation="-90 0 0" color="#2a3a5a" width="3.5" align="center" font="mozillavr">
+      </a-text>
+
+      <!-- Migration route lines (placeholder arcs) -->
+      <!-- REPLACE with canvas-texture-map component connected to real Deck.gl output -->
+      <a-entity id="migration-arc-west"
+                line="start: -0.5 0.1 1.0; end: -2.2 0.8 -1.0; color: #6090d0; opacity: 0.7"
+                animation="property: line.end; from: -0.5 0.1 1.0; to: -2.2 0.8 -1.0; dur: 3000; loop: true; dir: alternate; easing: easeInOutSine">
+      </a-entity>
+      <a-entity id="migration-arc-east"
+                line="start: 0.5 0.1 1.0; end: 2.2 0.8 -1.0; color: #c0643c; opacity: 0.7"
+                animation="property: line.end; from: 0.5 0.1 1.0; to: 2.2 0.8 -1.0; dur: 2800; loop: true; dir: alternate; easing: easeInOutSine">
+      </a-entity>
+
+      <!-- City markers -->
+      <a-sphere position="-0.1 0.05 0.3"  radius="0.06"
+                material="color: #d4a843; emissive: #d4a843; emissiveIntensity: 1.5"
+                animation="property: scale; from: 1 1 1; to: 1.4 1.4 1.4; dir: alternate; dur: 1200; loop: true">
+      </a-sphere>
+      <a-text value="SAIDPUR" position="-0.1 0.12 0.3" color="#d4a843" width="1.2" align="center" font="mozillavr"></a-text>
+    </a-entity>
+
+
+    <!-- ── Camera + controls ── -->
+    <a-entity id="camera-rig" position="0 0 3.5">
+      <a-entity id="main-camera" camera look-controls position="0 1.6 0">
+        <a-plane position="0 0 -0.1" width="2" height="2"
+                 id="fade-plane"
+                 material="color: #000; shader: flat; transparent: true; opacity: 0; depthTest: false">
+        </a-plane>
+      </a-entity>
+    </a-entity>
+
+  </a-scene>
+
+  <script src="../components/partition-particles.js"></script>
+  <script>
+    // ── Panel switcher (2D UI tabs) ──────────────────────
+    function showPanel(name) {
+      // Highlight active tab
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // In a full implementation, show/hide A-Frame panel entities here
+      // For now all three panels are always visible in the 3D scene
+      const titles = {
+        statistics:  'The Scale of Displacement',
+        timeline:    'Events Leading to Partition',
+        testimonies: 'Voices of the Displaced'
+      };
+      document.getElementById('chapter-title').textContent = titles[name] || '';
+    }
+
+    // ── Audio placeholder (testimony panel play button) ──
+    document.querySelector('#play-btn').addEventListener('click', () => {
+      // REPLACE: load and play real testimony audio
+      // const audio = new Audio('../assets/audio/testimony-placeholder.mp3');
+      // audio.play();
+      console.log('▶ Play testimony — replace with real audio file');
+      alert('PLACEHOLDER: Connect real oral history audio here.\nSee assets/audio/ and testimony-data.json');
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timeline — Saidpur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles/global.css" />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <style>
+    body {
+      margin: 0; background: #04040a; color: #e8dcc8;
+      font-family: 'Cormorant Garamond', serif; overflow-x: hidden;
+    }
+    header {
+      padding: 1.2rem 2rem; border-bottom: 1px solid #1e1c16;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.15em; color: #5a5040;
+    }
+    h1 { text-align: center; font-weight: 300; font-size: clamp(1.4rem,3vw,2rem); margin: 1.5rem 0 0.3rem; }
+    .subtitle { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #5a5040; text-align: center; letter-spacing: 0.2em; margin-bottom: 1.5rem; }
+
+    #timeline-container { width: 100%; overflow-x: auto; padding-bottom: 1rem; }
+    #timeline-svg { display: block; }
+
+    /* Event detail panel */
+    #event-panel {
+      position: fixed; right: 2rem; top: 50%; transform: translateY(-50%);
+      width: 280px; background: rgba(6,8,15,0.95);
+      border: 1px solid #1e2030; border-left: 2px solid #c0392b;
+      padding: 1.5rem; backdrop-filter: blur(10px);
+      display: none;
+    }
+    #event-panel.visible { display: block; }
+    #event-year  { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #c0392b; letter-spacing: 0.2em; margin-bottom: 0.4rem; }
+    #event-title { font-size: 1.2rem; font-weight: 400; margin-bottom: 0.8rem; line-height: 1.3; }
+    #event-body  { font-size: 0.9rem; color: #9a8e7a; line-height: 1.7; }
+    #event-close { position: absolute; top: 0.6rem; right: 0.8rem; background: none; border: none; color: #5a5040; cursor: pointer; font-size: 1.1rem; }
+
+    nav.bottom-nav { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; }
+    nav.bottom-nav a {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.15em; text-decoration: none; color: #9a8e7a;
+      padding: 0.6rem 1.4rem; border: 1px solid #2a2418; transition: all 0.3s;
+    }
+    nav.bottom-nav a:hover { border-color: #c0392b; color: #e8dcc8; }
+  </style>
+</head>
+<body>
+
+  <div id="loading-screen">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Loading timeline…</div>
+  </div>
+
+  <header>
+    <a href="../scenes/briefing-scene.html" style="color:inherit;text-decoration:none">← Briefing</a>
+    <span>TIMELINE  1857–1950</span>
+    <a href="../scenes/map-table-scene.html" style="color:#c0392b;text-decoration:none">Enter VR →</a>
+  </header>
+
+  <h1>Road to Partition</h1>
+  <p class="subtitle">CLICK AN EVENT TO EXPAND · SCROLL TO EXPLORE</p>
+
+  <div id="timeline-container">
+    <svg id="timeline-svg"></svg>
+  </div>
+
+  <!-- Event detail panel (right side) -->
+  <div id="event-panel">
+    <button id="event-close" onclick="closePanel()">✕</button>
+    <div id="event-year">1947</div>
+    <div id="event-title">Event Title</div>
+    <div id="event-body">Description placeholder.</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="migration-map.html">Migration Map →</a>
+    <a href="../scenes/briefing-scene.html">← Briefing</a>
+    <a href="../scenes/map-table-scene.html">Enter VR →</a>
+  </nav>
+
+  <script src="timeline-visualization.js"></script>
+  <script>
+    async function init() {
+      let events;
+      try {
+        const res = await fetch('../data/timeline-data.json');
+        events = (await res.json()).events;
+      } catch(e) {
+        console.warn('timeline-data.json not found — using placeholder data');
+        events = getPlaceholderEvents();
+      }
+      renderTimeline(events);
+      document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    function renderTimeline(events) {
+      const W     = Math.max(window.innerWidth, events.length * 120);
+      const H     = 320;
+      const svg   = d3.select('#timeline-svg').attr('width', W).attr('height', H);
+      const xScale = d3.scaleLinear()
+        .domain([d3.min(events, d => d.year) - 3, d3.max(events, d => d.year) + 3])
+        .range([60, W - 60]);
+
+      // Background
+      svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#06080f');
+
+      // Axis line
+      svg.append('line')
+        .attr('x1', 40).attr('x2', W - 40)
+        .attr('y1', H / 2).attr('y2', H / 2)
+        .attr('stroke', '#1e2030').attr('stroke-width', 2);
+
+      // Event nodes
+      const node = svg.selectAll('.event-node')
+        .data(events).join('g').attr('class', 'event-node')
+        .attr('transform', d => `translate(${xScale(d.year)}, ${H/2})`)
+        .style('cursor', 'pointer')
+        .on('click', (evt, d) => openPanel(d));
+
+      // Circle
+      node.append('circle')
+        .attr('r', d => d.significant ? 10 : 6)
+        .attr('fill', d => {
+          if (d.type === 'partition') return '#c0392b';
+          if (d.type === 'violence')  return '#c0643c';
+          return '#d4a843';
+        })
+        .attr('opacity', 0.85);
+
+      // Pulse on significant events
+      node.filter(d => d.significant)
+        .append('circle')
+        .attr('r', 10)
+        .attr('fill', 'none')
+        .attr('stroke', '#c0392b')
+        .attr('stroke-width', 1.5)
+        .attr('opacity', 0.5)
+        .each(function() {
+          d3.select(this).append('animate')
+            .attr('attributeName', 'r').attr('values', '10;18;10')
+            .attr('dur', '2s').attr('repeatCount', 'indefinite');
+          d3.select(this).append('animate')
+            .attr('attributeName', 'opacity').attr('values', '0.5;0;0.5')
+            .attr('dur', '2s').attr('repeatCount', 'indefinite');
+        });
+
+      // Year label below
+      node.append('text')
+        .attr('y', 28)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#5a5040')
+        .attr('font-family', 'Share Tech Mono, monospace')
+        .attr('font-size', 9)
+        .text(d => d.year);
+
+      // Title label above (alternating above/below to avoid overlap)
+      node.append('text')
+        .attr('y', (d, i) => i % 2 === 0 ? -18 : 46)
+        .attr('text-anchor', 'middle')
+        .attr('fill', d => d.significant ? '#e8dcc8' : '#7a6e5a')
+        .attr('font-family', 'Cormorant Garamond, serif')
+        .attr('font-size', d => d.significant ? 11 : 9)
+        .text(d => d.title.length > 22 ? d.title.slice(0,22) + '…' : d.title);
+    }
+
+    function openPanel(d) {
+      document.getElementById('event-year').textContent  = d.year;
+      document.getElementById('event-title').textContent = d.title;
+      document.getElementById('event-body').textContent  = d.description;
+      document.getElementById('event-panel').classList.add('visible');
+    }
+    function closePanel() {
+      document.getElementById('event-panel').classList.remove('visible');
+    }
+
+    function getPlaceholderEvents() {
+      return [
+        { year: 1857, title: 'Indian Rebellion',   type: 'violence',  significant: false, description: 'The 1857 Rebellion against British East India Company rule. Aftermath: direct Crown rule imposed.' },
+        { year: 1885, title: 'INC Founded',         type: 'political', significant: false, description: 'Indian National Congress founded, beginning organised political movement for self-rule.' },
+        { year: 1905, title: 'Bengal Partition',    type: 'partition', significant: true,  description: 'Lord Curzon partitions Bengal along religious lines. Mass protests force reversal in 1911. First test of divide-and-rule.' },
+        { year: 1906, title: 'Muslim League',       type: 'political', significant: false, description: 'All India Muslim League founded in Dhaka as political voice for Muslim interests.' },
+        { year: 1919, title: 'Amritsar Massacre',   type: 'violence',  significant: true,  description: 'British troops fire on unarmed crowd at Jallianwala Bagh. ~379–1000 killed. Turning point in independence movement.' },
+        { year: 1930, title: 'Salt March',          type: 'political', significant: false, description: 'Gandhi leads 240-mile Salt March. Civil disobedience accelerates across India.' },
+        { year: 1940, title: 'Lahore Resolution',   type: 'political', significant: true,  description: 'Muslim League passes the Lahore Resolution demanding independent Muslim states. Foundation of Pakistan movement.' },
+        { year: 1942, title: 'Quit India',          type: 'political', significant: false, description: 'Gandhi launches Quit India movement. Mass arrests; British crack down harshly.' },
+        { year: 1946, title: 'Direct Action Day',   type: 'violence',  significant: true,  description: 'Muslim League calls Direct Action Day. Calcutta Killings: 4,000+ dead in communal violence over 4 days.' },
+        { year: 1947, title: 'Partition & Independence', type: 'partition', significant: true, description: 'August 14–15, 1947. British India divided into India and Pakistan. 14–15 million displaced. 500,000–2M killed. Saidpur\'s Hindu population flees overnight.' },
+        { year: 1948, title: 'Gandhi Assassinated', type: 'violence',  significant: true,  description: 'Mahatma Gandhi assassinated January 30, 1948. First Kashmir War erupts between India and Pakistan.' },
+        { year: 1950, title: 'Nehru-Liaquat Pact',  type: 'political', significant: false, description: 'Nehru-Liaquat Pact attempts to protect minorities in both countries. Largely ineffective on the ground.' }
+      ];
+    }
+
+    init();
+  </script>
+</body>
+</html>
