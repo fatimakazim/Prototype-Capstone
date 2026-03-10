@@ -1,259 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Saidpur — A Partition Memory</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/global.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saidpur Village VR - Map Room & Teleport</title>
+  
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+  
   <style>
-    /* ── Landing-specific styles ─────────────────────────── */
-    body {
-      background: #04040a;
-      color: #e8dcc8;
-      font-family: 'Cormorant Garamond', serif;
-      margin: 0;
-      overflow: hidden;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Animated grain overlay */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    #ui-overlay {
+      position: fixed; top: 20px; left: 20px; z-index: 1000;
+      background: rgba(0, 0, 0, 0.7); color: white; padding: 15px 20px;
+      border-radius: 10px; font-size: 14px; backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       pointer-events: none;
-      z-index: 100;
-      opacity: 0.4;
     }
-
-    /* Radcliffe Line — a single red horizontal rule */
-    .radcliffe-line {
-      position: fixed;
-      top: 50%;
-      left: 0;
-      width: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #c0392b 20%, #c0392b 80%, transparent);
-      animation: drawLine 3s ease-out 1s forwards;
-      z-index: 1;
+    #ui-overlay h3 { margin: 0 0 10px 0; font-size: 18px; color: #ffd700; }
+    
+    #loading-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, #0a0a14 0%, #16213e 100%);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 2000; transition: opacity 0.5s ease;
     }
-    @keyframes drawLine {
-      to { width: 100%; }
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    
+    .loader {
+      width: 50px; height: 50px; border: 5px solid rgba(255, 215, 0, 0.3);
+      border-top: 5px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite;
     }
-
-    .hero {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      max-width: 680px;
-      padding: 0 2rem;
-      opacity: 0;
-      animation: fadeUp 1.6s ease-out 0.4s forwards;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .year-label {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 0.3em;
-      color: #c0392b;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-    }
-
-    h1 {
-      font-weight: 300;
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      line-height: 1.05;
-      margin: 0 0 0.3em;
-      letter-spacing: -0.01em;
-    }
-
-    h1 em {
-      font-style: italic;
-      color: #b8a882;
-    }
-
-    .subtitle {
-      font-size: 1.1rem;
-      font-weight: 300;
-      line-height: 1.7;
-      color: #9a8e7a;
-      max-width: 480px;
-      margin: 0 auto 3rem;
-    }
-
-    .cta-group {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      text-decoration: none;
-      color: #04040a;
-      background: #e8dcc8;
-      border: none;
-      padding: 0.9rem 2.2rem;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
-      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    }
-    .btn-primary:hover {
-      background: #c0392b;
-      color: #fff;
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      text-decoration: none;
-      color: #9a8e7a;
-      background: transparent;
-      border: 1px solid #3a3428;
-      padding: 0.9rem 2.2rem;
-      cursor: pointer;
-      transition: border-color 0.3s, color 0.3s;
-      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    }
-    .btn-secondary:hover { border-color: #9a8e7a; color: #e8dcc8; }
-
-    /* Floating stat counters */
-    .stats-bar {
-      position: fixed;
-      bottom: 2rem;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      gap: 4rem;
-      z-index: 10;
-      opacity: 0;
-      animation: fadeUp 1s ease-out 2s forwards;
-    }
-    .stat { text-align: center; }
-    .stat-number {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.5rem;
-      color: #c0392b;
-      display: block;
-    }
-    .stat-label {
-      font-size: 0.75rem;
-      color: #5a5040;
-      letter-spacing: 0.1em;
-    }
-
-    /* Particle canvas behind everything */
-    #particle-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      opacity: 0.35;
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
+
 <body>
-  <canvas id="particle-canvas"></canvas>
-  <div class="radcliffe-line"></div>
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text" style="color: white; margin-top: 20px; font-size: 16px;">Loading Saidpur VR...</div>
+  </div>
 
-  <main class="hero">
-    <p class="year-label">August 14–15, 1947 &nbsp;·&nbsp; Pakistan / India</p>
-    <h1>Saidpur<br><em>A Partition Memory</em></h1>
-    <p class="subtitle">
-      An immersive VR micro-site exploring how displacement and religious erasure
-      are embedded in one village's architecture and landscape.
-    </p>
-    <div class="cta-group">
-      <a href="scenes/briefing-scene.html" class="btn-primary">Begin Experience</a>
-      <a href="scenes/map-table-scene.html" class="btn-secondary">Skip to VR</a>
-    </div>
-  </main>
+  <div id="ui-overlay">
+    <h3>🏛️ Saidpur Village VR</h3>
+    <p><strong>Controls:</strong></p>
+    <p>🖱️ Point and Click/Trigger Map Hotspots to Teleport</p>
+    <p>🕹️ Left Thumbstick to Walk (VR Mode)</p>
+  </div>
 
-  <footer class="stats-bar">
-    <div class="stat">
-      <span class="stat-number">14–15M</span>
-      <span class="stat-label">people displaced</span>
-    </div>
-    <div class="stat">
-      <span class="stat-number">36 days</span>
-      <span class="stat-label">to draw the border</span>
-    </div>
-    <div class="stat">
-      <span class="stat-number">500k–2M</span>
-      <span class="stat-label">lives lost</span>
-    </div>
-  </footer>
-
+  <!-- ============================================================
+       THUMBSTICK LOCOMOTION COMPONENT
+       Registered before <a-scene> so it's available at parse time.
+  ============================================================ -->
   <script>
-    // ── Minimal background particle system (landing page only) ──
-    // Represents displaced people drifting across the subcontinent.
-    const canvas = document.getElementById('particle-canvas');
-    const ctx    = canvas.getContext('2d');
-    let W, H, particles = [];
+    AFRAME.registerComponent('thumbstick-locomotion', {
+      schema: {
+        speed:    { type: 'number',  default: 2.5  },  // units per second
+        deadzone: { type: 'number',  default: 0.2  },  // ignore small drift
+        vrOnly:   { type: 'boolean', default: true }   // only active in VR headset
+      },
 
-    function resize() {
-      W = canvas.width  = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
+      init: function () {
+        this.axisX    = 0;
+        this.axisY    = 0;
+        this.isVRMode = false;
 
-    function createParticles(count = 180) {
-      particles = [];
-      for (let i = 0; i < count; i++) {
-        const isMuslim = Math.random() > 0.5;
-        particles.push({
-          x:    Math.random() * W,
-          y:    Math.random() * H,
-          vx:   isMuslim ? -(0.1 + Math.random() * 0.3) : (0.1 + Math.random() * 0.3),
-          vy:   (Math.random() - 0.5) * 0.15,
-          r:    0.8 + Math.random() * 1.2,
-          // amber for Hindu/Sikh westward flight, blue for Muslim eastward
-          color: isMuslim ? 'rgba(96,160,220,0.6)' : 'rgba(192,100,60,0.6)'
+        // Track VR entry / exit
+        this.el.sceneEl.addEventListener('enter-vr', () => {
+          this.isVRMode = true;
         });
+        this.el.sceneEl.addEventListener('exit-vr', () => {
+          this.isVRMode = false;
+          // Zero out axes so there's no phantom movement on re-entry
+          this.axisX = 0;
+          this.axisY = 0;
+        });
+
+        // Bind handler and attach to left controller once it exists.
+        // Controllers are attached asynchronously, so we poll briefly.
+        this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
+        this._bindController();
+      },
+
+      // Polls until #left-hand exists, then attaches the thumbstickmoved listener.
+      _bindController: function () {
+        const leftHand = document.querySelector('#left-hand');
+        if (!leftHand) {
+          setTimeout(() => this._bindController(), 200);
+          return;
+        }
+        leftHand.addEventListener('thumbstickmoved', this.onThumbstickMoved);
+      },
+
+      // Called every time the left thumbstick moves.
+      onThumbstickMoved: function (evt) {
+        const x = evt.detail.x;  // left / right
+        const y = evt.detail.y;  // forward (negative) / backward (positive)
+
+        // Apply deadzone — eliminates hardware drift
+        this.axisX = Math.abs(x) > this.data.deadzone ? x : 0;
+        this.axisY = Math.abs(y) > this.data.deadzone ? y : 0;
+      },
+
+      tick: function (time, delta) {
+        // Gate: only run in VR unless vrOnly is disabled
+        if (this.data.vrOnly && !this.isVRMode) return;
+        if (this.axisX === 0 && this.axisY === 0) return;
+
+        const dt     = delta / 1000;   // milliseconds → seconds
+        const rig    = this.el;        // this component lives on #camera-rig
+        const camera = document.querySelector('#main-camera');
+
+        // Combine rig Y-rotation with camera look Y-rotation so movement
+        // is always relative to the direction the player is facing.
+        const camRotY   = camera.object3D.rotation.y;
+        const rigRotY   = rig.object3D.rotation.y;
+        const totalRotY = camRotY + rigRotY;
+
+        // Project thumbstick axes onto the horizontal plane.
+        // axisY > 0 = stick pulled back = move backward, so we negate it.
+        const moveX = Math.sin(totalRotY) * (-this.axisY) + Math.cos(totalRotY) * (this.axisX);
+        const moveZ = Math.cos(totalRotY) * (-this.axisY) - Math.sin(totalRotY) * (this.axisX);
+
+        // Directly update the rig position (never the camera entity itself)
+        const pos = rig.object3D.position;
+        pos.x += moveX * this.data.speed * dt;
+        pos.z += moveZ * this.data.speed * dt;
+      },
+
+      // Clean up listener when component is removed
+      remove: function () {
+        const leftHand = document.querySelector('#left-hand');
+        if (leftHand) {
+          leftHand.removeEventListener('thumbstickmoved', this.onThumbstickMoved);
+        }
       }
-    }
-
-    function animateParticles() {
-      ctx.clearRect(0, 0, W, H);
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        // Wrap around screen edges
-        if (p.x < 0)  p.x = W;
-        if (p.x > W)  p.x = 0;
-        if (p.y < 0)  p.y = H;
-        if (p.y > H)  p.y = 0;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-      });
-      requestAnimationFrame(animateParticles);
-    }
-
-    resize();
-    createParticles();
-    animateParticles();
-    window.addEventListener('resize', () => { resize(); createParticles(); });
+    });
   </script>
+
+  <a-scene 
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true; highRefreshRate: true;"
+    shadow="type: pcfsoft; enabled: true"
+    cursor="rayOrigin: mouse"
+    raycaster="objects: .clickable"
+    xr-mode-ui="enabled: true"
+    vr-mode-ui="enabled: true">
+    
+    <a-assets timeout="10000">
+      <a-asset-item id="village-model" src="Model.glb"></a-asset-item>
+      
+      <img id="sky-tex"    src="https://cdn.polyhaven.com/asset_img/primary/sunset_in_the_chalk_quarry.png" crossorigin="anonymous">
+      <img id="cobble-tex" src="https://cdn.polyhaven.com/asset_img/primary/cobblestone_floor_02.png?height=780" crossorigin="anonymous">
+      <img id="stone-tex"  src="https://cdn.polyhaven.com/asset_img/primary/rock_wall.png?height=780" crossorigin="anonymous">
+      <img id="water-tex"  src="https://cdn.polyhaven.com/asset_img/primary/water_002.png?height=780" crossorigin="anonymous">
+    </a-assets>
+
+    <!-- MAP WORLD -->
+    <a-entity id="map-world" visible="true">
+      <a-sky 
+        id="map-sky"
+        color="#0a0a14"
+        material="shader: flat; fog: false;">
+      </a-sky>
+      <a-light type="ambient" color="#1a1a24" intensity="1.2"></a-light>
+      <a-light type="point" color="#ffb74d" intensity="2.5" distance="8" position="0 2.5 0" castShadow="true"></a-light>
+
+      <a-entity position="0 0 0">
+        <a-box position="0 0.4 0" width="1.2" height="0.8" depth="0.8" material="src: #stone-tex; color: #333; roughness: 0.9"></a-box>
+        <a-box position="0 0.85 0" width="1.8" height="0.1" depth="1.2" material="src: #stone-tex; color: #555; roughness: 1"></a-box>
+        <a-plane position="0 0.91 0" rotation="-90 0 0" width="1.7" height="1.1" material="src: #cobble-tex; color: #a69b82; roughness: 0.8"></a-plane>
+      </a-entity>
+
+      <a-entity id="map-hotspots" position="0 0.95 0">
+        
+        <a-sphere class="clickable map-hotspot" position="-0.5 0 0.2" radius="0.05"
+                  material="color: #ffaa00; emissive: #ff8800; emissiveIntensity: 1; transparent: true; opacity: 0.8"
+                  animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 800; loop: true; easing: easeInOutSine"
+                  data-target-position="28 0 95" data-target-rotation="0 45 0">
+        </a-sphere>
+
+        <a-sphere class="clickable map-hotspot" position="0.3 0 -0.1" radius="0.05"
+                  material="color: #00ffaa; emissive: #00aa66; emissiveIntensity: 1; transparent: true; opacity: 0.8"
+                  animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"
+                  data-target-position="0 0 0" data-target-rotation="0 -90 0">
+        </a-sphere>
+
+        <a-sphere class="clickable map-hotspot" position="0.5 0 0.3" radius="0.05"
+                  material="color: #00aaff; emissive: #0066aa; emissiveIntensity: 1; transparent: true; opacity: 0.8"
+                  animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 850; loop: true; easing: easeInOutSine"
+                  data-target-position="8 0 -10" data-target-rotation="0 180 0">
+        </a-sphere>
+
+      </a-entity>
+    </a-entity>
+
+    <!-- VILLAGE WORLD -->
+    <a-entity id="village-world" visible="false">
+      <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+      <a-light type="directional" color="#ffd7a8" intensity="1.5" position="-20 30 10" castShadow="true"></a-light>
+
+      <a-entity
+        id="village-glb"
+        gltf-model="#village-model"
+        position="0 -1.7 0"
+        scale="1 1 1"
+        rotation="0 0 0"
+        shadow="cast: true; receive: true"
+        animation-mixer="clip: *; loop: repeat">
+      </a-entity>
+
+      <a-sky src="#sky-tex" rotation="0 -110 0" material="fog: false;"></a-sky> 
+      
+      <a-plane rotation="-90 0 0" width="4" height="50" position="0 0.03 -10" material="src: #cobble-tex; repeat: 4 30; color: #dcb;"></a-plane>
+
+      <a-entity position="8 0 0">
+        <a-plane rotation="-90 0 0" width="6" height="60" position="0 0.02 -10" 
+                 material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;" 
+                 animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
+        </a-plane>
+        <a-box position="-3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
+        <a-box position="3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
+      </a-entity>
+    </a-entity>
+
+    <!-- DUST BURST TRANSITION EFFECT -->
+    <a-entity id="dust-burst" visible="false" position="0 0 0">
+      <a-sphere radius="0.5" material="color: #d2b48c; shader: flat; transparent: true; opacity: 0.9; side: back" 
+                animation__scale="property: scale; from: 1 1 1; to: 40 40 40; dur: 1500; startEvents: burst; easing: easeOutCubic" 
+                animation__fade="property: material.opacity; from: 0.9; to: 0; dur: 1500; startEvents: burst; easing: easeOutQuad">
+      </a-sphere>
+      <a-sphere radius="0.3" material="color: #f5deb3; shader: flat; transparent: true; opacity: 0.7; side: back" 
+                animation__scale="property: scale; from: 1 1 1; to: 30 30 30; dur: 1200; startEvents: burst; easing: easeOutCubic" 
+                animation__fade="property: material.opacity; from: 0.7; to: 0; dur: 1200; startEvents: burst; easing: easeOutQuad">
+      </a-sphere>
+    </a-entity>
+
+    <!--
+      CAMERA RIG
+      thumbstick-locomotion component added here.
+      speed: 2.5 units/sec  |  deadzone: 0.2  |  vrOnly: true
+      All other attributes are unchanged from the original.
+    -->
+    <a-entity id="camera-rig" position="0 0 2" rotation="0 0 0"
+              thumbstick-locomotion="speed: 2.5; deadzone: 0.2; vrOnly: true">
+
+      <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0">
+        
+        <a-plane id="fade-plane" 
+                 position="0 0 -0.1" 
+                 width="2" height="2" 
+                 material="color: #000; shader: flat; transparent: true; opacity: 0; depthTest: false">
+        </a-plane>
+
+      </a-entity>
+      
+      <a-entity id="left-hand" 
+                laser-controls="hand: left" 
+                raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
+      </a-entity>
+      
+      <a-entity id="right-hand" 
+                laser-controls="hand: right" 
+                raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
+      </a-entity>
+
+    </a-entity>
+
+  </a-scene>
+
+  <script src="main.js"></script>
 </body>
 </html>
