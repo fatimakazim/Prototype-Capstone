@@ -1,305 +1,832 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Saidpur Village VR - Map Room & Teleport</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reframing Partition Memories — Saidpur Village VR</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
- <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+  <!-- polyhedron-narrator.js MUST load before <a-scene> -->
+  <script src="hologram.js"></script>
+  <script src="polyhedron-narrator.js"></script>
   <style>
-   body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  
-   #ui-overlay {
-     position: fixed; top: 20px; left: 20px; z-index: 1000;
-     background: rgba(0, 0, 0, 0.7); color: white; padding: 15px 20px;
-     border-radius: 10px; font-size: 14px; backdrop-filter: blur(10px);
-     border: 1px solid rgba(255, 255, 255, 0.1);
-     pointer-events: none;
-   }
-   #ui-overlay h3 { margin: 0 0 10px 0; font-size: 18px; color: #ffd700; }
-  
-   #loading-screen {
-     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-     background: linear-gradient(135deg, #0a0a14 0%, #16213e 100%);
-     display: flex; flex-direction: column; justify-content: center; align-items: center;
-     z-index: 2000; transition: opacity 0.5s ease;
-   }
-   #loading-screen.hidden { opacity: 0; pointer-events: none; }
-  
-   .loader {
-     width: 50px; height: 50px; border: 5px solid rgba(255, 215, 0, 0.3);
-     border-top: 5px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite;
-   }
-   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
- </style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inconsolata:wght@300;400&family=IM+Fell+English:ital@0;1&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+    :root {
+      --gold:#c9a84c; --cream:#f0e8d5; --charcoal:#1a1710; --dust:#b5a07a;
+      --holo:#50ffcc; --speaker-glow:#e8c87a;
+    }
+    *,*::before,*::after { box-sizing:border-box }
+    body { margin:0; overflow:hidden; font-family:'Inconsolata',monospace; background:var(--charcoal) }
+
+    /* LOADING */
+    #loading-screen { position:fixed; inset:0; z-index:3000; background:var(--charcoal); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:28px; transition:opacity .8s ease }
+    #loading-screen.hidden { opacity:0; pointer-events:none }
+    .loading-title { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:clamp(1.1rem,3vw,1.5rem); color:var(--cream); letter-spacing:.18em; text-align:center; padding:0 2rem; line-height:1.6 }
+    .loading-title em { font-style:italic; color:var(--gold); display:block; font-size:1.2em }
+    .loader-bar { width:200px; height:1px; background:rgba(201,168,76,0.2); position:relative; overflow:hidden }
+    .loader-bar::after { content:''; position:absolute; top:0; left:-60%; width:60%; height:100%; background:var(--gold); animation:scan 1.4s ease-in-out infinite }
+    @keyframes scan { 0%{left:-60%} 100%{left:110%} }
+    .loading-sub { color:var(--dust); font-size:.72rem; letter-spacing:.2em; text-transform:uppercase }
+
+    /* HUD */
+    #ui-overlay { position:fixed; top:20px; left:20px; z-index:1000; color:var(--cream); padding:16px 20px; border-left:1px solid rgba(201,168,76,0.4); pointer-events:none; max-width:260px }
+    #ui-overlay h3 { margin:0 0 10px; font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1rem; letter-spacing:.15em; color:var(--gold); text-transform:uppercase }
+    #ui-overlay p { margin:4px 0; font-size:.72rem; letter-spacing:.08em; color:rgba(240,232,213,0.6); line-height:1.6 }
+    #scene-label { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:1000; font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:1.1rem; color:var(--gold); letter-spacing:.12em; opacity:0; transition:opacity .8s ease; text-align:center; pointer-events:none }
+    #scene-label.visible { opacity:1 }
+
+    /* INTRO CARD */
+    #intro-card { position:fixed; inset:0; z-index:2000; display:flex; justify-content:center; align-items:center; background:rgba(26,23,16,0.92); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .6s ease }
+    #intro-card.visible { opacity:1; pointer-events:all }
+    .intro-box { max-width:520px; padding:48px 52px; border:1px solid rgba(201,168,76,0.3); background:rgba(26,23,16,0.97); text-align:center }
+    .intro-box h2 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:1.6rem; letter-spacing:.1em; color:var(--gold); margin:0 0 8px }
+    .intro-box .sub { font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--dust); font-size:.9rem; margin-bottom:28px }
+    .intro-box p { color:rgba(240,232,213,0.75); font-size:.8rem; line-height:1.85; letter-spacing:.05em; margin-bottom:32px }
+    .intro-btn { display:inline-block; padding:12px 36px; border:1px solid var(--gold); color:var(--gold); font-family:'Inconsolata',monospace; font-size:.75rem; letter-spacing:.2em; text-transform:uppercase; cursor:pointer; background:transparent; transition:background .3s,color .3s }
+    .intro-btn:hover { background:var(--gold); color:var(--charcoal) }
+
+    /* HOLOGRAM HUD BADGE */
+    #holo-hud { position:fixed; z-index:460; pointer-events:none; transform:translate(-50%,-100%); text-align:center; opacity:0; transition:opacity .5s ease }
+    #holo-hud.visible { opacity:1 }
+    .hh-title { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:.9rem; letter-spacing:.22em; text-transform:uppercase; color:var(--holo); text-shadow:0 0 8px rgba(80,255,204,.9),0 0 24px rgba(80,255,204,.45),0 0 48px rgba(80,255,204,.2) }
+    .hh-sub { font-family:'Inconsolata',monospace; font-size:.60rem; letter-spacing:.16em; color:rgba(80,255,204,.50); margin-top:3px }
+    .hh-rule { width:44px; height:1px; margin:7px auto 0; background:linear-gradient(to right,transparent,var(--holo),transparent); animation:hhrule 2.2s ease-in-out infinite }
+    @keyframes hhrule { 0%,100%{opacity:.3;width:28px} 50%{opacity:1;width:56px} }
+    .hh-cta { font-size:.58rem; letter-spacing:.18em; color:rgba(80,255,204,.35); margin-top:5px; font-family:'Inconsolata',monospace; text-transform:uppercase }
+
+    /* POLYHEDRON NARRATOR HUD BADGE (replaces ghost-hud) */
+    #ghost-hud { position:fixed; z-index:459; pointer-events:none; transform:translate(-50%,-100%); text-align:center; opacity:0; transition:opacity .6s ease }
+    #ghost-hud.visible { opacity:1 }
+    .gh-title { font-family:'Cormorant Garamond',serif; font-weight:300; font-style:italic; font-size:.85rem; letter-spacing:.20em; color:var(--holo); text-shadow:0 0 10px rgba(80,255,204,.8),0 0 28px rgba(80,255,204,.35) }
+    .gh-sub { font-family:'Inconsolata',monospace; font-size:.58rem; letter-spacing:.15em; color:rgba(80,255,204,.42); margin-top:3px }
+    .gh-rule { width:36px; height:1px; margin:6px auto 0; background:linear-gradient(to right,transparent,var(--holo),transparent); animation:ghrule 2.8s ease-in-out infinite }
+    @keyframes ghrule { 0%,100%{opacity:.2;width:22px} 50%{opacity:.8;width:48px} }
+    .gh-cta { font-size:.56rem; letter-spacing:.16em; color:rgba(80,255,204,.28); margin-top:5px; font-family:'Inconsolata',monospace; text-transform:uppercase }
+
+    /* ── NARRATOR SUBTITLE ──────────────────────────────────────────
+       Injected by main.js (NarratorSubtitle module) — this CSS rule
+       is a fallback style that applies if the element already exists
+       in the DOM before main.js runs. The element is created and
+       styled by JS in main.js so these styles are optional.
+    ───────────────────────────────────────────────────────────────── */
+    #narrator-subtitle {
+      position:        fixed;
+      bottom:          80px;
+      left:            50%;
+      transform:       translateX(-50%);
+      z-index:         1200;
+      max-width:       620px;
+      padding:         12px 24px;
+      background:      rgba(0,8,12,0.82);
+      border:          1px solid rgba(80,255,204,0.35);
+      color:           rgba(240,232,213,0.95);
+      font-family:     'IM Fell English', Georgia, serif;
+      font-size:       16px;
+      line-height:     1.6;
+      letter-spacing:  0.03em;
+      text-align:      center;
+      text-shadow:     0 1px 8px rgba(0,0,0,0.9);
+      backdrop-filter: blur(4px);
+      opacity:         0;
+      transition:      opacity 0.5s ease;
+      pointer-events:  none;
+      border-radius:   2px;
+    }
+    #narrator-subtitle.visible {
+      opacity: 1;
+    }
+
+    /* VILLAGE OVERLAY */
+    #village-partition-overlay { position:fixed; inset:0; z-index:500; display:none; opacity:0; transition:opacity .7s ease; overflow:hidden; font-family:'Crimson Pro',Georgia,serif; background:#c9b89a }
+    #village-partition-overlay.active { display:block; opacity:1 }
+    #village-partition-overlay::after { content:''; position:absolute; inset:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events:none; z-index:10; opacity:.6; mix-blend-mode:multiply }
+    #village-partition-overlay::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at center,transparent 50%,rgba(30,18,8,.55) 100%); pointer-events:none; z-index:11 }
+    #vp-scene { position:absolute; width:280vw; height:100%; background:linear-gradient(to bottom,#c9a87a 0%,#d9c4a0 38%,#b8956a 38%,#a07850 55%,#8a6640 100%); transition:transform 150s linear; transform:translateX(0); filter:sepia(.35) contrast(.92) brightness(.97) }
+    #vp-scene.playing { transform:translateX(-80vw) }
+    .vp-sun { position:absolute; top:8%; left:18%; width:70px; height:70px; background:radial-gradient(circle,#f0d898 30%,#e0b86080 70%,transparent 100%); border-radius:50%; box-shadow:0 0 60px 20px rgba(240,210,130,.35) }
+    .vp-hills { position:absolute; bottom:42%; left:0; width:280vw; height:180px; background:radial-gradient(ellipse 35vw 120px at 20vw 100%,rgba(140,120,100,.30) 60%,transparent 100%),radial-gradient(ellipse 40vw 100px at 60vw 100%,rgba(120,105,85,.25) 60%,transparent 100%),radial-gradient(ellipse 50vw 130px at 120vw 100%,rgba(130,115,95,.28) 60%,transparent 100%); z-index:1 }
+    .vp-fog { position:absolute; bottom:30%; left:0; width:280vw; height:200px; background:linear-gradient(to top,rgba(210,195,170,.55) 0%,transparent 100%); z-index:3; pointer-events:none }
+    .vp-ground { position:absolute; bottom:0; left:0; width:280vw; height:35%; background:repeating-linear-gradient(to bottom,transparent 0px,rgba(0,0,0,.03) 3px,transparent 6px),linear-gradient(to bottom,#b09070 0%,#8a6640 100%); z-index:4 }
+    .vp-field { position:absolute; bottom:0; left:190vw; width:60vw; height:80%; background:repeating-linear-gradient(to right,rgba(160,140,80,.4) 0px,rgba(160,140,80,.4) 8px,transparent 8px,transparent 18px),linear-gradient(to bottom,rgba(140,120,60,.3) 0%,transparent 100%); z-index:0 }
+    .vp-village-layer { position:absolute; bottom:35%; width:280vw; height:220px; z-index:5 }
+    .vp-building { position:absolute; bottom:0; cursor:default }
+    .vp-building::after { content:attr(data-info); position:absolute; bottom:110%; left:50%; transform:translateX(-50%); background:rgba(30,18,8,.82); color:#f0e8d5; padding:6px 12px; border-radius:3px; font-family:'Crimson Pro',serif; font-size:13px; font-style:italic; white-space:nowrap; opacity:0; transition:opacity .3s; pointer-events:none; border:1px solid rgba(200,175,140,.3); z-index:20 }
+    .vp-building:hover::after { opacity:1 }
+    .vp-mosque { left:12vw; width:90px; height:70px; background:linear-gradient(160deg,#d8c8a8 60%,#b8a888 100%); clip-path:polygon(0 100%,0 10%,20% 8%,100% 10%,100% 100%); box-shadow:inset -4px 0 8px rgba(0,0,0,.1) }
+    .vp-mosque::before { content:''; position:absolute; top:-52px; left:12px; width:64px; height:56px; background:linear-gradient(160deg,#cdbf9a,#b0a280); border-radius:50% 50% 0 0 }
+    .vp-minaret { position:absolute; left:-22px; bottom:0; width:16px; height:110px; background:linear-gradient(to right,#cdbf9a,#b8ab88) }
+    .vp-minaret::after { content:''; position:absolute; top:-18px; left:-5px; width:26px; height:26px; background:#c4b690; border-radius:50% 50% 0 0 }
+    .vp-temple { left:42vw; width:80px; height:70px; background:linear-gradient(160deg,#d0c0a0,#b8a880); clip-path:polygon(0 100%,0 15%,5% 13%,95% 13%,100% 15%,100% 100%) }
+    .vp-temple::before { content:''; position:absolute; top:-68px; left:8px; width:64px; height:70px; background:linear-gradient(to bottom,#c8b898 0%,#b0a070 100%); clip-path:polygon(50% 0%,0% 100%,100% 100%) }
+    .vp-temple-spire { position:absolute; top:-105px; left:24px; width:32px; height:40px; background:linear-gradient(to bottom,#d0c090,#b09060); clip-path:polygon(50% 0%,0% 100%,100% 100%) }
+    .vp-temple-spire::after { content:''; position:absolute; top:-10px; left:11px; width:10px; height:10px; background:#c0a860; border-radius:50% }
+    .vp-pond { left:67vw; bottom:-18px; width:170px; height:50px; background:radial-gradient(ellipse at 40% 40%,#a8c0b8,#7a9890 50%,#5a7870 100%); border-radius:50%; cursor:default }
+    .vp-pond::before { content:''; position:absolute; top:20%; left:20%; width:60%; height:50%; border:1px solid rgba(255,255,255,.25); border-radius:50% }
+    .vp-banyan { position:absolute; left:93vw; bottom:0; width:22px; height:130px; background:linear-gradient(to right,#5a3e28,#7a5838,#5a3e28); border-radius:4px 4px 0 0 }
+    .vp-banyan::before { content:''; position:absolute; top:-90px; left:-80px; width:180px; height:110px; background:radial-gradient(ellipse at center,#7a8a5a,#5a6a40 60%,#4a5a30 100%); border-radius:50%; box-shadow:18px 22px 0 #4a5a30,-18px 12px 0 #5a6848 }
+    .vp-school { left:128vw; width:120px; height:65px; background:linear-gradient(160deg,#d0bfa0,#b8a882); clip-path:polygon(0 100%,0 12%,5% 10%,95% 10%,100% 12%,100% 100%) }
+    .vp-school::before { content:''; position:absolute; top:-28px; left:-5px; width:130px; height:28px; background:linear-gradient(to bottom,#8a6848,#a07858); clip-path:polygon(4% 100%,50% 0%,96% 100%) }
+    .vp-school-door { position:absolute; bottom:0; left:48px; width:24px; height:36px; background:linear-gradient(to bottom,#7a5838,#5a3820); border-radius:12px 12px 0 0 }
+    .vp-peepal { position:absolute; left:160vw; bottom:0; width:16px; height:90px; background:linear-gradient(to right,#6a4830,#8a6040,#6a4830); border-radius:3px 3px 0 0 }
+    .vp-peepal::before { content:''; position:absolute; top:-70px; left:-55px; width:130px; height:90px; background:radial-gradient(ellipse at 45% 55%,#8a9a62,#6a7a48 55%,#586038 100%); border-radius:50% 45% 55% 50% }
+    .vp-grass { position:absolute; bottom:35%; left:0; width:280vw; height:20px; background:repeating-linear-gradient(to right,transparent 0px,transparent 12px,rgba(80,80,40,.35) 12px,rgba(80,80,40,.35) 14px,transparent 14px,transparent 24px); z-index:7; pointer-events:none }
+    .vp-villager { position:absolute; bottom:32%; z-index:6 }
+    .vp-villager .vp-v-head { margin:0 auto; border-radius:50% }
+    .vp-villager .vp-v-body { width:14px; height:36px; background:#3a2a1a; border-radius:7px 7px 4px 4px; margin:0 auto }
+    @keyframes vp-jitter { 0%,100%{transform:translateX(0) rotate(0deg)} 25%{transform:translateX(.5px) rotate(.3deg)} 75%{transform:translateX(-.5px) rotate(-.3deg)} }
+    @keyframes vp-walkR { 0%{transform:translateX(-5vw)} 100%{transform:translateX(295vw)} }
+    @keyframes vp-walkL { 0%{transform:translateX(295vw)} 100%{transform:translateX(-5vw)} }
+    .vp-v1 { animation:vp-walkR 45s linear infinite; left:5vw }
+    .vp-v2 { animation:vp-walkL 55s linear infinite; left:200vw; animation-delay:-15s }
+    .vp-v3 { animation:vp-walkR 38s linear infinite; left:-20vw; animation-delay:-8s }
+    .vp-v4 { animation:vp-walkL 60s linear infinite; left:250vw; animation-delay:-25s; bottom:34% }
+    .vp-v-body { animation:vp-jitter 2.4s ease-in-out infinite }
+    #vp-speakers { position:absolute; bottom:115px; left:0; width:100%; display:flex; justify-content:space-around; z-index:12; pointer-events:none; padding:0 8vw }
+    .vp-speaker { display:flex; flex-direction:column; align-items:center; opacity:.45; transition:opacity .4s ease,transform .4s ease; filter:sepia(.4) }
+    .vp-speaker.active { opacity:1; transform:scale(1.12) translateY(-4px); filter:sepia(0) drop-shadow(0 0 10px rgba(232,200,122,.7)) }
+    .vp-speaker-fig { width:52px; height:68px; position:relative }
+    .vp-s-body { position:absolute; bottom:0; left:11px; width:30px; height:44px; border-radius:15px 15px 6px 6px }
+    .vp-s-head { position:absolute; top:0; left:8px; width:36px; height:36px; border-radius:50% }
+    .vp-speaker.active .vp-s-head { box-shadow:0 0 0 3px var(--speaker-glow),0 0 16px rgba(232,200,122,.5) }
+    .vp-speaker-name { background:rgba(30,18,8,.75); color:#f0e8d5; padding:3px 10px; border-radius:2px; margin-top:7px; font-family:'Crimson Pro',serif; font-size:11px; letter-spacing:.08em; text-transform:uppercase; border:1px solid rgba(200,175,140,.2) }
+    #vp-ui-bar { position:absolute; bottom:0; left:0; width:100%; height:105px; background:linear-gradient(to top,rgba(20,12,6,.95) 60%,rgba(20,12,6,0) 100%); display:flex; align-items:center; padding:0 24px 8px; z-index:13; gap:16px }
+    #vp-play-btn { flex:0 0 46px; width:46px; height:46px; background:transparent; border:2px solid rgba(200,175,140,.6); color:#f0e8d5; border-radius:50%; cursor:pointer; font-size:15px; font-family:'Crimson Pro',serif; transition:background .3s,border-color .3s,box-shadow .3s; display:flex; align-items:center; justify-content:center }
+    #vp-play-btn:hover { background:rgba(200,175,140,.2); border-color:var(--speaker-glow); box-shadow:0 0 14px rgba(232,200,122,.35) }
+    #vp-audio-wrap { flex:0 0 160px; display:flex; flex-direction:column; gap:5px }
+    #vp-prog-bg { width:100%; height:3px; background:rgba(200,175,140,.25); border-radius:2px; cursor:pointer }
+    #vp-prog-fill { height:100%; width:0%; background:linear-gradient(to right,#c09060,var(--speaker-glow)); border-radius:2px; transition:width .5s linear }
+    #vp-time { color:rgba(200,175,140,.6); font-size:10px; font-family:'Crimson Pro',serif; letter-spacing:.05em }
+    #vp-subtitles { flex:1; text-align:center; color:#f0e8d5; font-family:'IM Fell English',Georgia,serif; font-size:18px; font-weight:400; line-height:1.55; padding:0 10px; text-shadow:0 1px 6px rgba(0,0,0,.8) }
+    .vp-sub-speaker { font-style:normal; font-weight:400; color:var(--speaker-glow); margin-right:8px; letter-spacing:.04em; font-family:'Crimson Pro',serif; font-size:13px; text-transform:uppercase }
+    #vp-return-btn { position:absolute; top:20px; left:20px; z-index:14; padding:10px 22px; border:1px solid rgba(201,168,76,.7); color:var(--gold); font-family:'Inconsolata',monospace; font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; cursor:pointer; background:rgba(26,23,16,.82); backdrop-filter:blur(4px); transition:background .3s,color .3s,border-color .3s }
+    #vp-return-btn:hover { background:var(--gold); color:var(--charcoal); border-color:var(--gold) }
+    #vp-title-card { position:absolute; inset:0; background:rgba(20,12,6,.82); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:15; transition:opacity 1s ease; pointer-events:none }
+    #vp-title-card.hidden { opacity:0; pointer-events:none }
+    #vp-title-card h1 { font-family:'IM Fell English',Georgia,serif; font-size:clamp(24px,5vw,52px); color:#f0e8d5; font-weight:400; letter-spacing:.04em; text-align:center; line-height:1.3; text-shadow:0 2px 20px rgba(0,0,0,.6) }
+    #vp-title-card p { color:rgba(200,175,140,.7); font-family:'Crimson Pro',serif; font-style:italic; font-size:16px; margin-top:16px; letter-spacing:.06em }
+    .vp-title-divider { width:80px; height:1px; background:rgba(200,175,140,.4); margin:20px auto }
+    /* INTRO SKIP OVERLAY */
+    #intro-skip-overlay {
+      position: fixed;
+      bottom: 36px;
+      right: 40px;
+      z-index: 1500;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      pointer-events: all;
+    }
+    #intro-skip-overlay.hidden { display: none; }
+    #intro-skip-btn {
+      padding: 11px 28px;
+      background: rgba(0, 13, 16, 0.88);
+      border: 1px solid var(--holo);
+      color: var(--holo);
+      font-family: 'Inconsolata', monospace;
+      font-size: .72rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .25s, box-shadow .25s;
+      box-shadow: 0 0 12px rgba(80,255,204,.15);
+    }
+    #intro-skip-btn:hover {
+      background: rgba(80,255,204,.12);
+      box-shadow: 0 0 22px rgba(80,255,204,.35);
+    }
+    #intro-skip-hint {
+      font-family: 'Inconsolata', monospace;
+      font-size: .60rem;
+      letter-spacing: .14em;
+      color: rgba(80,255,204,.30);
+      text-align: right;
+    }
+
+  </style>
 </head>
-
-
 <body>
- <div id="loading-screen">
-   <div class="loader"></div>
-   <div class="loading-text" style="color: white; margin-top: 20px; font-size: 16px;">Loading Saidpur VR...</div>
- </div>
 
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="loading-title"><em>Reframing Partition Memories</em>Interactive &amp; Immersive Media for<br>Postcolonial Identity and Resistance</div>
+  <div class="loader-bar"></div>
+  <div class="loading-sub">Loading Saidpur Village…</div>
+</div>
+
+<!-- INTRO CARD -->
+<div id="intro-card">
+  <div class="intro-box">
+    <h2>Saidpur Village VR</h2>
+    <div class="sub">Islamabad, Pakistan — 1947 and beyond</div>
+    <p>This experience explores the memory of Partition through the architecture and landscape of Saidpur Village. Walk around the architectural model, select a hotspot to enter a location, and listen to testimonies embedded in the space.</p>
+    <p style="font-size:.72rem;color:rgba(181,160,122,.6)">🖱 Point &amp; click hotspots &nbsp;|&nbsp; WASD to walk &nbsp;|&nbsp; VR: left thumbstick to move, trigger to select</p>
+    <button class="intro-btn" id="enter-btn">Enter the Village</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="ui-overlay">
+  <h3>Saidpur Village VR</h3>
+  <p>Point &amp; click glowing hotspots</p>
+  <p>WASD — walk in desktop mode</p>
+  <p>VR — left thumbstick to move</p>
+</div>
+<div id="scene-label"></div>
+
+<!-- HOLOGRAM HUD BADGE -->
+<div id="holo-hud">
+  <div class="hh-title">Before Partition</div>
+  <div class="hh-sub">oral testimony · saidpur village</div>
+  <div class="hh-rule"></div>
+  <div class="hh-cta">click to enter</div>
+</div>
+
+<!-- POLYHEDRON NARRATOR HUD BADGE -->
+<div id="ghost-hud">
+  <div class="gh-title">A Memory Remains</div>
+  <div class="gh-sub">approach to listen · saidpur village</div>
+  <div class="gh-rule"></div>
+  <div class="gh-cta">draw near</div>
+</div>
+
+<!--
+  NARRATOR SUBTITLE
+  ─────────────────────────────────────────────────────────────────
+  Injected and styled dynamically by NarratorSubtitle module in
+  main.js. This element is a static fallback; the JS module will
+  adopt it if it already exists in the DOM.
+  Position: bottom-center, above the scene label.
+-->
+<div id="narrator-subtitle"></div>
+
+<!-- INTRO SKIP BUTTON -->
+<div id="intro-skip-overlay">
+  <button id="intro-skip-btn">ENTER THE MUSEUM &nbsp;›</button>
+  <div id="intro-skip-hint">or wait for the memory to end</div>
+</div>
+
+<!-- VILLAGE OVERLAY -->
+<div id="village-partition-overlay">
+  <button id="vp-return-btn">↩ &nbsp;Return to Model</button>
+  <div id="vp-title-card">
+    <h1>Before Partition<br><span style="font-size:.55em;letter-spacing:.12em;color:rgba(200,175,140,.7)">A Village Story</span></h1>
+    <div class="vp-title-divider"></div>
+    <p>Islamabad, Pakistan — Oral History Interview</p>
+  </div>
+  <div id="vp-scene">
+    <div class="vp-sun"></div><div class="vp-hills"></div><div class="vp-fog"></div>
+    <div class="vp-ground"></div><div class="vp-field"></div>
+    <div class="vp-village-layer">
+      <div class="vp-building vp-mosque" data-info="Historic Mosque — small originally, expanded over time"><div class="vp-minaret"></div></div>
+      <div class="vp-building vp-temple" data-info="Old Hindu Temple — donated stair slabs with names of Sikh &amp; Hindu donors"><div class="vp-temple-spire"></div></div>
+      <div class="vp-pond" data-info="Bathing Ponds — separate for men and women, walls for privacy"></div>
+      <div class="vp-banyan"></div>
+      <div class="vp-building vp-school" data-info="Old School Building — Temple also used as school"><div class="vp-school-door"></div></div>
+      <div class="vp-peepal"></div>
+    </div>
+    <div class="vp-grass"></div>
+    <div class="vp-villager vp-v1"><div class="vp-v-head" style="width:16px;height:16px;background:#b08060"></div><div class="vp-v-body"></div></div>
+    <div class="vp-villager vp-v2"><div class="vp-v-head" style="width:16px;height:16px;background:#c09870"></div><div class="vp-v-body" style="background:#2a1a0e"></div></div>
+    <div class="vp-villager vp-v3"><div class="vp-v-head" style="width:14px;height:14px;background:#a87858"></div><div class="vp-v-body" style="background:#342010"></div></div>
+    <div class="vp-villager vp-v4"><div class="vp-v-head" style="width:16px;height:16px;background:#b89068"></div><div class="vp-v-body" style="background:#2e1c0c"></div></div>
+  </div>
+  <div id="vp-speakers">
+    <div class="vp-speaker" id="vp-speaker-interviewer"><div class="vp-speaker-fig"><div class="vp-s-body" style="background:#3a4a5a"></div><div class="vp-s-head" style="background:#c09878"></div></div><div class="vp-speaker-name">Interviewer</div></div>
+    <div class="vp-speaker" id="vp-speaker-man1"><div class="vp-speaker-fig"><div class="vp-s-body" style="background:#3a4a2a"></div><div class="vp-s-head" style="background:#b88860"></div></div><div class="vp-speaker-name">Local Man 1</div></div>
+    <div class="vp-speaker" id="vp-speaker-man2"><div class="vp-speaker-fig"><div class="vp-s-body" style="background:#4a3a5a"></div><div class="vp-s-head" style="background:#c09070"></div></div><div class="vp-speaker-name">Local Man 2</div></div>
+  </div>
+  <div id="vp-ui-bar">
+    <button id="vp-play-btn">▶</button>
+    <div id="vp-audio-wrap"><div id="vp-prog-bg"><div id="vp-prog-fill"></div></div><div id="vp-time">0:00 / —</div></div>
+    <div id="vp-subtitles"><em style="color:rgba(200,175,140,.55);font-size:14px">Press ▶ to begin the story of this village.</em></div>
+  </div>
+  <audio id="vp-interview-audio" preload="auto"><source src="assets/audio/village-interview.mp3" type="audio/mpeg"></audio>
+</div>
+
+<!-- THUMBSTICK LOCOMOTION — registered BEFORE <a-scene> -->
+<script>
+AFRAME.registerComponent('thumbstick-locomotion', {
+  schema: { speed:{ type:'number', default:2.5 }, deadzone:{ type:'number', default:.2 }, vrOnly:{ type:'boolean', default:true } },
+  init () {
+    this.axisX = 0; this.axisY = 0; this.isVRMode = false;
+    this.el.sceneEl.addEventListener('enter-vr', () => { this.isVRMode = true; });
+    this.el.sceneEl.addEventListener('exit-vr',  () => { this.isVRMode = false; this.axisX = 0; this.axisY = 0; });
+    this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
+    this._bindController();
+  },
+  _bindController () {
+    const lh = document.querySelector('#left-hand');
+    if (!lh) { setTimeout(() => this._bindController(), 200); return; }
+    lh.addEventListener('thumbstickmoved', this.onThumbstickMoved);
+  },
+  onThumbstickMoved (evt) {
+    const x = evt.detail.x, y = evt.detail.y;
+    this.axisX = Math.abs(x) > this.data.deadzone ? x : 0;
+    this.axisY = Math.abs(y) > this.data.deadzone ? y : 0;
+  },
+  tick (time, delta) {
+    if (this.data.vrOnly && !this.isVRMode) return;
+    if (this.axisX === 0 && this.axisY === 0) return;
+    const dt = delta / 1000, rig = this.el;
+    const camera = document.querySelector('#main-camera');
+    const camRotY = camera.object3D.rotation.y;
+    const rigRotY = rig.object3D.rotation.y;
+    const totalRotY = camRotY + rigRotY;
+    const moveX = Math.sin(totalRotY) * (-this.axisY) + Math.cos(totalRotY) * this.axisX;
+    const moveZ = Math.cos(totalRotY) * (-this.axisY) - Math.sin(totalRotY) * this.axisX;
+    const pos = rig.object3D.position;
+    pos.x += moveX * this.data.speed * dt;
+    pos.z += moveZ * this.data.speed * dt;
+  },
+  remove () {
+    const lh = document.querySelector('#left-hand');
+    if (lh) lh.removeEventListener('thumbstickmoved', this.onThumbstickMoved);
+  },
+});
+</script>
+
+<!-- A-FRAME SCENE -->
+<a-scene
+  renderer="antialias:true;colorManagement:true;physicallyCorrectLights:true;toneMapping:ACESFilmic;exposure:1.8;"
+  shadow="type:pcfsoft;enabled:true"
+  cursor="rayOrigin:mouse"
+  raycaster="objects:.clickable"
+  xr-mode-ui="enabled:true"
+  vr-mode-ui="enabled:true">
+
+  <a-assets timeout="15000">
+    <a-asset-item id="arch-model" src="Model.glb"></a-asset-item>
+
+    <!-- MAIN NARRATOR AUDIO — ambient / proximity triggered -->
+    <audio id="audio-ghost-narrator"
+           src="assets/audio/ghost-narrator.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <!--
+      NARRATION SEQUENCE AUDIO CLIPS
+      ────────────────────────────────────────────────────────────────
+      One <audio> element per narration beat.
+      Place the corresponding .mp3 files at:
+        assets/audio/narration-mosque.mp3
+        assets/audio/narration-temple.mp3
+        assets/audio/narration-pond.mp3
+        assets/audio/narration-school.mp3
+        assets/audio/narration-trees.mp3
+
+      The id must match the audioSrc value in buildNarrationSequence()
+      in main.js. If a file is missing, that beat plays silently and
+      advances on its duration timer.
+    ──────────────────────────────────────────────────────────────── -->
+    <audio id="audio-narrator-mosque"
+           src="assets/audio/narration-mosque.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <audio id="audio-narrator-temple"
+           src="assets/audio/narration-temple.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <audio id="audio-narrator-pond"
+           src="assets/audio/narration-pond.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <audio id="audio-narrator-school"
+           src="assets/audio/narration-school.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <audio id="audio-narrator-trees"
+           src="assets/audio/narration-trees.mp3"
+           preload="none"
+           crossorigin="anonymous"></audio>
+
+    <video id="holo-vid"
+           src="assets/video/testimony-hologram.mp4"
+           preload="auto" playsinline
+           crossorigin="anonymous"
+           webkit-playsinline="true"></video>
+
+    <audio id="holo-audio"
+           src="assets/audio/ambient-village.mp3"
+           preload="auto"
+           crossorigin="anonymous"></audio>
+
+    <video id="street-360-vid" src="assets/video/testimony-1.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
+    <img id="temple-360" src="assets/360/temple-360.jpg" crossorigin="anonymous">
+    <img id="house-360"  src="assets/360/house-360.jpg"  crossorigin="anonymous">
+    <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
+    <audio id="audio-temple"  src="assets/audio/narration-temple.mp3"  preload="none" crossorigin="anonymous"></audio>
+    <audio id="ambient-model" src="assets/audio/ambient-museum.mp3"    preload="none" crossorigin="anonymous"></audio>
+  </a-assets>
+
+  <!-- ============================================================
+       LAYER 0 — INTRO HOLOGRAM SCENE
+  ============================================================ -->
+  <a-entity id="intro-hologram-scene" visible="true">
+
+    <a-sky color="#000000"></a-sky>
+    <a-light type="ambient" color="#000000" intensity="0"></a-light>
+
+    <a-light id="intro-glow-light"
+             type="point" color="#50ffcc" intensity="2.0" distance="7" decay="2"
+             position="0 1.6 -3.5"
+             animation="property:intensity;from:1.4;to:2.6;dir:alternate;dur:2200;loop:true;easing:easeInOutSine">
+    </a-light>
+
+    <a-light type="point" color="#0a2020" intensity="0.8" distance="4" decay="2"
+             position="0 0.3 -2.5">
+    </a-light>
+
+    <a-entity id="intro-screen-video"
+              geometry="primitive:cylinder;
+                        radius:3.8;
+                        height:2.2;
+                        openEnded:true;
+                        thetaStart:200;
+                        thetaLength:140;
+                        segmentsRadial:60"
+              position="0 1.55 0.5"
+              rotation="0 180 0"
+              material="src:#holo-vid;
+                        shader:flat;
+                        side:double;
+                        transparent:true;
+                        opacity:0.95"
+              animation__breathe="property:material.opacity;from:0.90;to:0.98;dir:alternate;dur:3000;loop:true;easing:easeInOutSine">
+    </a-entity>
+
+    <a-torus position="0 2.67 0.5" rotation="90 0 0" radius="3.82"
+             radius-tubular="0.014" segments-tubular="80"
+             material="color:#50ffcc;emissive:#50ffcc;emissiveIntensity:3;shader:flat;transparent:true;opacity:0.7"
+             animation="property:material.opacity;from:0.4;to:0.9;dir:alternate;dur:1800;loop:true;easing:easeInOutSine">
+    </a-torus>
+    <a-torus position="0 0.43 0.5" rotation="90 0 0" radius="3.82"
+             radius-tubular="0.014" segments-tubular="80"
+             material="color:#50ffcc;emissive:#50ffcc;emissiveIntensity:3;shader:flat;transparent:true;opacity:0.7"
+             animation="property:material.opacity;from:0.4;to:0.9;dir:alternate;dur:2100;loop:true;easing:easeInOutSine">
+    </a-torus>
+
+    <a-plane rotation="-90 0 0" width="30" height="30" position="0 0 0"
+             material="color:#010608;roughness:0.1;metalness:0.6;transparent:true;opacity:0.97">
+    </a-plane>
+
+  </a-entity><!-- /intro-hologram-scene -->
+
+
+  <!-- ============================================================
+       LAYER 1 — ARCHITECTURAL MODEL SCENE
+  ============================================================ -->
+  <a-entity id="model-scene" visible="false">
+
+    <a-sky color="#060608"></a-sky>
+
+    <a-light type="ambient"     color="#ffffff"  intensity="0.22"></a-light>
+    <a-light type="directional" color="#e8dfc8"  intensity="0.8"
+             position="-1 4 2" castShadow="true"
+             shadow-camera-near="0.1" shadow-camera-far="12"
+             shadow-camera-left="-3" shadow-camera-right="3"
+             shadow-camera-top="3"   shadow-camera-bottom="-3"
+             shadow-mapSize-width="1024" shadow-mapSize-height="1024">
+    </a-light>
+    <a-light type="point" color="#ffcc66" intensity="1.2" distance="5" decay="2" position="-0.6 0.72 -3.4"></a-light>
+    <a-light type="point" color="#aad4ff" intensity="1.2" distance="5" decay="2" position="0.6 0.72 -4.6"></a-light>
+
+    <!-- Narrator accent light — intensity driven by polyhedron-narrator component -->
+    <a-light id="ghost-light"
+             type="point"
+             color="#50ffcc"
+             intensity="0.35"
+             distance="1.2"
+             decay="2"
+             position="2 1.55 -5"
+             animation="property:intensity;from:0.20;to:0.55;dir:alternate;dur:2100;loop:true;easing:easeInOutSine">
+    </a-light>
+
+    <!-- Hologram accent light -->
+    <a-light id="holo-light"
+             type="point"
+             color="#50ffcc"
+             intensity="0.5"
+             distance="1.4"
+             decay="2"
+             position="-0.05 1.05 -4.50"
+             animation="property:intensity;from:0.30;to:0.80;dir:alternate;dur:1600;loop:true;easing:easeInOutSine">
+    </a-light>
+
+    <a-plane rotation="-90 0 0" width="40" height="40" position="0 0 0"
+             material="color:#0a0a0a;roughness:0.6;metalness:0.15"
+             shadow="receive:true">
+    </a-plane>
+
+    <a-torus position="0 0.08 -4" rotation="90 0 0" radius="1.4" radius-tubular="0.012"
+             material="color:#c9a84c;emissive:#c9a84c;emissiveIntensity:1.4;roughness:0.3">
+    </a-torus>
+
+    <a-entity id="arch-glb"
+              gltf-model="#arch-model"
+              position="0 0.8 -4"
+              scale="0.015 0.015 0.015"
+              shadow="cast:true;receive:true">
+    </a-entity>
+    <!-- ══════════════════════════════════════════════════════════════════
+     NARRATION FOCUS ANCHORS
+     ──────────────────────────────────────────────────────────────────
+     INSERT these entities INSIDE #model-scene, just after the
+     #arch-glb entity and BEFORE the hotspot entities.
+
+     These are invisible world-space anchors. The 'narration-focus'
+     component (registered in main.js) drives a pulsing ring + beam
+     + point-light effect on whichever anchor is currently active.
+
+     POSITION GUIDE:
+       #arch-glb is at:  position="0 0.8 -4"  scale="0.015 0.015 0.015"
+       So model-space (X,Y,Z) × 0.015 + (0, 0.8, -4) = world position.
+       These are APPROXIMATE — tweak by watching where the ring appears.
+
+     HOW TO PLACE NEW ANCHORS:
+       1. Walk around the model in-browser.
+       2. Note where the feature is visually (approx X, Z on the floor
+          plane of the model).
+       3. Set Y = roughly 0.82 (just above the model base) to place
+          the ring at feature height.
+       4. Add the entity below and reference it in buildNarrationSequence()
+          in main.js via focusTarget: '#focus-myfeature'.
+══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Focus anchor: Mosque -->
+    <a-entity
+      id="focus-mosque"
+      position="-0.05 0.85 -4.10"
+      narration-focus>
+    </a-entity>
+
+    <!-- Focus anchor: Temple / Prem Mandir -->
+    <a-entity
+      id="focus-temple"
+      position="0.12 0.85 -4.05"
+      narration-focus>
+    </a-entity>
+
+    <!-- Focus anchor: Bathing Ponds -->
+    <a-entity
+      id="focus-pond"
+      position="0.08 0.82 -3.90"
+      narration-focus>
+    </a-entity>
+
+    <!-- Focus anchor: School -->
+    <a-entity
+      id="focus-school"
+      position="-0.12 0.85 -3.95"
+      narration-focus>
+    </a-entity>
+
+    <!-- Focus anchor: Banyan / Trees -->
+    <a-entity
+      id="focus-trees"
+      position="0.18 0.85 -4.20"
+      narration-focus>
+    </a-entity>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     NOTES ON POSITION TUNING
+     ──────────────────────────────────────────────────────────────────
+     The positions above are starting estimates based on:
+       - arch-glb position="0 0.8 -4" scale="0.015 0.015 0.015"
+       - Saidpur Village layout (mosque typically N, temple SE,
+         ponds SW, school NW, trees at periphery)
+
+     The effect radius is 0.18–0.30 world-metres, which at scale
+     0.015 covers a generous portion of the model, so sub-metre
+     precision is not needed. Move anchors until the ring visually
+     centres over the correct feature.
+
+     To debug positions quickly, temporarily make an anchor visible:
+       <a-entity id="focus-mosque" position="..." narration-focus>
+         <a-sphere radius="0.02" color="red"></a-sphere>
+       </a-entity>
+     Remove the debug sphere once satisfied with placement.
+══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         POLYHEDRON NARRATOR ENTITY
+         ══════════════════════════════════════════════════════════
+         Position: X=2 shifts right of model, Y=1.25 elevated,
+         Z=-5 slightly behind model centre.
+         ghost-light position above must match X and Z of this entity.
+
+         SCHEMA:
+           color          — tint hex (cyan matches hologram palette)
+           audioSrc       — fallback ambient audio (proximity mode)
+           volume         — max volume for NarrationAudioManager
+           triggerDist    — metres: proximity engine auto-start + audio
+           fadeStartDist  — metres: audio/glow begin fading in
+           clickToPlay    — click toggles engine or standalone audio
+           animSpeed      — multiplier on all animation timing
+           floatOffset    — phase offset for float (stagger multiple narrators)
+    ══════════════════════════════════════════════════════════════ -->
+    <a-entity
+      id="polyhedron-narrator"
+      position="2 1.25 -5"
+      polyhedron-narrator="color:        #d0e8ff;
+                           audioSrc:     #audio-ghost-narrator;
+                           volume:       0.90;
+                           triggerDist:  2.2;
+                           fadeStartDist:3.5;
+                           clickToPlay:  true;
+                           animSpeed:    1.0;
+                           floatOffset:  0.0">
+
+      <!-- Ground ripple rings — signals the narrator's presence -->
+      <a-entity
+        polyhedron-narrator-indicator="color: #50ffcc; radius: 0.22"
+        position="0 -1.25 0">
+      </a-entity>
+
+    </a-entity><!-- /polyhedron-narrator -->
+
+
+    <!-- ── Hotspot A: Village Street ── -->
+    <a-entity id="hotspot-street" class="clickable model-hotspot" position="-0.18 0.9 -3.94" data-scene="street" data-label="Village Street — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="street" radius="0.025"
+                material="color:#f5c842;emissive:#e6a800;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:900;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#f5c842;emissive:#f5c842;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3000;loop:true;easing:linear"></a-torus>
+      <a-text value="Village Street" align="center" color="#f5c842" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot B: Temple / Mosque ── -->
+    <a-entity id="hotspot-temple" class="clickable model-hotspot" position="0.12 0.9 -4.05" data-scene="temple" data-label="Prem Mandir / Shahi Mosque — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="temple" radius="0.025"
+                material="color:#9ee8ff;emissive:#00aadd;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1000;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#9ee8ff;emissive:#9ee8ff;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3500;loop:true;easing:linear"></a-torus>
+      <a-text value="Prem Mandir" align="center" color="#9ee8ff" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot C: Abandoned House ── -->
+    <a-entity id="hotspot-house" class="clickable model-hotspot" position="0.05 0.9 -3.86" data-scene="house" data-label="Abandoned Family Home — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="house" radius="0.025"
+                material="color:#ffb3a0;emissive:#dd4422;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1100;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffb3a0;emissive:#ffb3a0;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:2800;loop:true;easing:linear"></a-torus>
+      <a-text value="Family Home" align="center" color="#ffb3a0" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot D: Before Partition (Holographic) ── -->
+    <a-entity
+      id="hotspot-holo"
+      position="-0.05 1.25 -7"
+      hologram-video="videoSrc: #holo-vid;
+                      audioSrc: #holo-audio;
+                      color:    #50ffcc;
+                      width:    6;
+                      height:   0.5;
+                      volume:   0.85;
+                      autoplay: true">
+
+      <a-box class="clickable model-hotspot"
+             data-scene="htmlScene"
+             data-label="Before Partition — Oral History"
+             width="1.9" height="1.1" depth="0.05"
+             position="0 0 -0.03"
+             material="transparent:true;opacity:0.0"
+             visible="true">
+      </a-box>
+
+    </a-entity>
+
+  </a-entity><!-- /model-scene -->
+
+  <!-- ============================================================
+       LAYER 2 — 360° IMMERSIVE SCENES
+  ============================================================ -->
+
+  <a-entity id="scene-street" visible="false">
+    <a-videosphere id="street-videosphere" src="#street-360-vid" rotation="0 -90 0"></a-videosphere>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" scale="0.6 0.6 0.6" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-temple" visible="false">
+    <a-sky src="#temple-360" rotation="0 -45 0"></a-sky>
+    <a-sound src="#audio-temple" autoplay="true" loop="true" positional="false" volume="0.4"></a-sound>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-house" visible="false">
+    <a-sky src="#house-360" rotation="0 180 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- CAMERA RIG -->
+<!-- CAMERA RIG -->
+<a-entity id="camera-rig"
+          position="0 0 0.5"
+          rotation="0 0 0"
+          thumbstick-locomotion="speed:2.5;deadzone:.2;vrOnly:true"
+          movement-controls="controls: checkpoint"
+          checkpoint-controls="mode: animate">
+
+  <!-- CAMERA -->
+  <a-entity id="main-camera"
+            camera
+            look-controls
+            wasd-controls
+            position="0 1.6 0">
+
+    <!-- FADE PLANE -->
+    <a-plane id="fade-plane"
+             position="0 0 -0.08"
+             width="3"
+             height="3"
+             material="color:#000;shader:flat;transparent:true;opacity:0;depthTest:false;side:double">
+    </a-plane>
+
+    <!-- ✅ VR SUBTITLE (CORRECT PLACEMENT) -->
+    <a-entity id="vr-subtitle"
+              position="0 -0.5 -1.2"
+              text="value: ;
+                    align: center;
+                    width: 2.5;
+                    wrapCount: 40;
+                    color: #f0e8d5"
+              visible="false">
+    </a-entity>
+
+  </a-entity>
+
+  <!-- HANDS -->
+  <a-entity id="left-hand"
+            laser-controls="hand:left"
+            raycaster="objects:.clickable;far:20;lineColor:#c9a84c;lineOpacity:0.6;showLine:true">
+  </a-entity>
+
+  <a-entity id="right-hand"
+            laser-controls="hand:right"
+            raycaster="objects:.clickable;far:20;lineColor:#c9a84c;lineOpacity:0.6;showLine:true">
+  </a-entity>
+
+</a-entity>
+
+</a-scene>
+<script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
+<script src="main.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  window.addEventListener('load', () => {
+    const loader = document.querySelector('#loading-screen');
+    setTimeout(() => {
+      if (loader) loader.classList.add('hidden');
+    }, 1500);
+  });
+
+  const enterBtn  = document.querySelector('#enter-btn');
+  const introCard = document.querySelector('#intro-card');
+  if (enterBtn && introCard) {
+    enterBtn.addEventListener('click', () => {
+      introCard.classList.remove('visible');
+      const ambient = document.querySelector('#ambient-model');
+      if (ambient && ambient.play) ambient.play().catch(() => {});
+      console.log('[index] Scene started by user.');
+    });
+  }
+
+});
+</script>
 
- <div id="ui-overlay">
-   <h3>🏛️ Saidpur Village VR</h3>
-   <p><strong>Controls:</strong></p>
-   <p>🖱️ Point and Click/Trigger Map Hotspots to Teleport</p>
-   <p>🕹️ Left Thumbstick to Walk (VR Mode)</p>
- </div>
-
-
- <!-- ============================================================
-      THUMBSTICK LOCOMOTION COMPONENT
-      Registered before <a-scene> so it's available at parse time.
- ============================================================ -->
- <script>
-   AFRAME.registerComponent('thumbstick-locomotion', {
-     schema: {
-       speed:    { type: 'number',  default: 2.5  },  // units per second
-       deadzone: { type: 'number',  default: 0.2  },  // ignore small drift
-       vrOnly:   { type: 'boolean', default: true }   // only active in VR headset
-     },
-
-
-     init: function () {
-       this.axisX    = 0;
-       this.axisY    = 0;
-       this.isVRMode = false;
-
-
-       // Track VR entry / exit
-       this.el.sceneEl.addEventListener('enter-vr', () => {
-         this.isVRMode = true;
-       });
-       this.el.sceneEl.addEventListener('exit-vr', () => {
-         this.isVRMode = false;
-         // Zero out axes so there's no phantom movement on re-entry
-         this.axisX = 0;
-         this.axisY = 0;
-       });
-
-
-       // Bind handler and attach to left controller once it exists.
-       // Controllers are attached asynchronously, so we poll briefly.
-       this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
-       this._bindController();
-     },
-
-
-     // Polls until #left-hand exists, then attaches the thumbstickmoved listener.
-     _bindController: function () {
-       const leftHand = document.querySelector('#left-hand');
-       if (!leftHand) {
-         setTimeout(() => this._bindController(), 200);
-         return;
-       }
-       leftHand.addEventListener('thumbstickmoved', this.onThumbstickMoved);
-     },
-
-
-     // Called every time the left thumbstick moves.
-     onThumbstickMoved: function (evt) {
-       const x = evt.detail.x;  // left / right
-       const y = evt.detail.y;  // forward (negative) / backward (positive)
-
-
-       // Apply deadzone — eliminates hardware drift
-       this.axisX = Math.abs(x) > this.data.deadzone ? x : 0;
-       this.axisY = Math.abs(y) > this.data.deadzone ? y : 0;
-     },
-
-
-     tick: function (time, delta) {
-       // Gate: only run in VR unless vrOnly is disabled
-       if (this.data.vrOnly && !this.isVRMode) return;
-       if (this.axisX === 0 && this.axisY === 0) return;
-
-
-       const dt     = delta / 1000;   // milliseconds → seconds
-       const rig    = this.el;        // this component lives on #camera-rig
-       const camera = document.querySelector('#main-camera');
-
-
-       // Combine rig Y-rotation with camera look Y-rotation so movement
-       // is always relative to the direction the player is facing.
-       const camRotY   = camera.object3D.rotation.y;
-       const rigRotY   = rig.object3D.rotation.y;
-       const totalRotY = camRotY + rigRotY;
-
-
-       // Project thumbstick axes onto the horizontal plane.
-       // axisY > 0 = stick pulled back = move backward, so we negate it.
-       const moveX = Math.sin(totalRotY) * (-this.axisY) + Math.cos(totalRotY) * (this.axisX);
-       const moveZ = Math.cos(totalRotY) * (-this.axisY) - Math.sin(totalRotY) * (this.axisX);
-
-
-       // Directly update the rig position (never the camera entity itself)
-       const pos = rig.object3D.position;
-       pos.x += moveX * this.data.speed * dt;
-       pos.z += moveZ * this.data.speed * dt;
-     },
-
-
-     // Clean up listener when component is removed
-     remove: function () {
-       const leftHand = document.querySelector('#left-hand');
-       if (leftHand) {
-         leftHand.removeEventListener('thumbstickmoved', this.onThumbstickMoved);
-       }
-     }
-   });
- </script>
-
-
- <a-scene
-   renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true; highRefreshRate: true;"
-   shadow="type: pcfsoft; enabled: true"
-   cursor="rayOrigin: mouse"
-   raycaster="objects: .clickable"
-   xr-mode-ui="enabled: true"
-   vr-mode-ui="enabled: true">
-  
-   <a-assets timeout="10000">
-     <a-asset-item id="village-model" src="Model.glb"></a-asset-item>
-    
-     <img id="sky-tex"    src="https://cdn.polyhaven.com/asset_img/primary/sunset_in_the_chalk_quarry.png" crossorigin="anonymous">
-     <img id="cobble-tex" src="https://cdn.polyhaven.com/asset_img/primary/cobblestone_floor_02.png?height=780" crossorigin="anonymous">
-     <img id="stone-tex"  src="https://cdn.polyhaven.com/asset_img/primary/rock_wall.png?height=780" crossorigin="anonymous">
-     <img id="water-tex"  src="https://cdn.polyhaven.com/asset_img/primary/water_002.png?height=780" crossorigin="anonymous">
-   </a-assets>
-
-
-   <!-- MAP WORLD -->
-   <a-entity id="map-world" visible="true">
-     <a-sky
-       id="map-sky"
-       color="#0a0a14"
-       material="shader: flat; fog: false;">
-     </a-sky>
-     <a-light type="ambient" color="#1a1a24" intensity="1.2"></a-light>
-     <a-light type="point" color="#ffb74d" intensity="2.5" distance="8" position="0 2.5 0" castShadow="true"></a-light>
-
-
-     <a-entity position="0 0 0">
-       <a-box position="0 0.4 0" width="1.2" height="0.8" depth="0.8" material="src: #stone-tex; color: #333; roughness: 0.9"></a-box>
-       <a-box position="0 0.85 0" width="1.8" height="0.1" depth="1.2" material="src: #stone-tex; color: #555; roughness: 1"></a-box>
-       <a-plane position="0 0.91 0" rotation="-90 0 0" width="1.7" height="1.1" material="src: #cobble-tex; color: #a69b82; roughness: 0.8"></a-plane>
-     </a-entity>
-
-
-     <a-entity id="map-hotspots" position="0 0.95 0">
-      
-       <a-sphere class="clickable map-hotspot" position="-0.5 0 0.2" radius="0.05"
-                 material="color: #ffaa00; emissive: #ff8800; emissiveIntensity: 1; transparent: true; opacity: 0.8"
-                 animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 800; loop: true; easing: easeInOutSine"
-                 data-target-position="28 0 95" data-target-rotation="0 45 0">
-       </a-sphere>
-
-
-       <a-sphere class="clickable map-hotspot" position="0.3 0 -0.1" radius="0.05"
-                 material="color: #00ffaa; emissive: #00aa66; emissiveIntensity: 1; transparent: true; opacity: 0.8"
-                 animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"
-                 data-target-position="0 0 0" data-target-rotation="0 -90 0">
-       </a-sphere>
-
-
-       <a-sphere class="clickable map-hotspot" position="0.5 0 0.3" radius="0.05"
-                 material="color: #00aaff; emissive: #0066aa; emissiveIntensity: 1; transparent: true; opacity: 0.8"
-                 animation="property: scale; from: 1 1 1; to: 1.3 1.3 1.3; dir: alternate; dur: 850; loop: true; easing: easeInOutSine"
-                 data-target-position="8 0 -10" data-target-rotation="0 180 0">
-       </a-sphere>
-
-
-     </a-entity>
-   </a-entity>
-
-
-   <!-- VILLAGE WORLD -->
-   <a-entity id="village-world" visible="false">
-     <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
-     <a-light type="directional" color="#ffd7a8" intensity="1.5" position="-20 30 10" castShadow="true"></a-light>
-
-
-     <a-entity
-       id="village-glb"
-       gltf-model="#village-model"
-       position="0 -1.7 0"
-       scale="1 1 1"
-       rotation="0 0 0"
-       shadow="cast: true; receive: true"
-       animation-mixer="clip: *; loop: repeat">
-     </a-entity>
-
-
-     <a-sky src="#sky-tex" rotation="0 -110 0" material="fog: false;"></a-sky>
-    
-     <a-plane rotation="-90 0 0" width="4" height="50" position="0 0.03 -10" material="src: #cobble-tex; repeat: 4 30; color: #dcb;"></a-plane>
-
-
-     <a-entity position="8 0 0">
-       <a-plane rotation="-90 0 0" width="6" height="60" position="0 0.02 -10"
-                material="src: #water-tex; repeat: 2 18; transparent: true; opacity: 0.8; metalness: 0.9; roughness: 0.1; color: #ffbf00;"
-                animation="property: material.offset.y; from: 0; to: 1; dur: 10000; loop: true; easing: linear;">
-       </a-plane>
-       <a-box position="-3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
-       <a-box position="3.2 0.05 -10" width="0.6" height="0.4" depth="60" material="src: #stone-tex; repeat: 1 10; color: #864;"></a-box>
-     </a-entity>
-   </a-entity>
-
-
-   <!-- DUST BURST TRANSITION EFFECT -->
-   <a-entity id="dust-burst" visible="false" position="0 0 0">
-     <a-sphere radius="0.5" material="color: #d2b48c; shader: flat; transparent: true; opacity: 0.9; side: back"
-               animation__scale="property: scale; from: 1 1 1; to: 40 40 40; dur: 1500; startEvents: burst; easing: easeOutCubic"
-               animation__fade="property: material.opacity; from: 0.9; to: 0; dur: 1500; startEvents: burst; easing: easeOutQuad">
-     </a-sphere>
-     <a-sphere radius="0.3" material="color: #f5deb3; shader: flat; transparent: true; opacity: 0.7; side: back"
-               animation__scale="property: scale; from: 1 1 1; to: 30 30 30; dur: 1200; startEvents: burst; easing: easeOutCubic"
-               animation__fade="property: material.opacity; from: 0.7; to: 0; dur: 1200; startEvents: burst; easing: easeOutQuad">
-     </a-sphere>
-   </a-entity>
-
-
-   <!--
-     CAMERA RIG
-     thumbstick-locomotion component added here.
-     speed: 2.5 units/sec  |  deadzone: 0.2  |  vrOnly: true
-     All other attributes are unchanged from the original.
-   -->
-   <a-entity id="camera-rig" position="0 0 2" rotation="0 0 0"
-             thumbstick-locomotion="speed: 2.5; deadzone: 0.2; vrOnly: true">
-
-
-     <a-entity id="main-camera" camera look-controls wasd-controls position="0 1.6 0">
-      
-       <a-plane id="fade-plane"
-                position="0 0 -0.1"
-                width="2" height="2"
-                material="color: #000; shader: flat; transparent: true; opacity: 0; depthTest: false">
-       </a-plane>
-
-
-     </a-entity>
-    
-     <a-entity id="left-hand"
-               laser-controls="hand: left"
-               raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
-     </a-entity>
-    
-     <a-entity id="right-hand"
-               laser-controls="hand: right"
-               raycaster="objects: .clickable; far: 20; lineColor: #FF0000; showLine: true">
-     </a-entity>
-
-
-   </a-entity>
-
-
- </a-scene>
-
-
- <script src="main.js"></script>
 </body>
 </html>
