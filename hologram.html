@@ -21,7 +21,8 @@
       background: #000;
       pointer-events: none;
       z-index: 9999;
-      transition: opacity 1.8s ease;   /* TUNE:FADE_IN */
+      opacity: 1;                       /* starts black, fades to clear on load */
+      transition: opacity 1.8s ease;
     }
   </style>
 
@@ -553,6 +554,8 @@
       crossorigin="anonymous"
       preload="auto">
     </video>
+
+    <audio id="holo-audio" src="assets/audio/scene1.mp3" preload="auto" loop></audio>
   </a-assets>
 
   <a-entity id="rig" position="0 0 0">
@@ -569,9 +572,10 @@
     position="0 0 -3.1"
     hologram-video="
       videoSrc: #holo-video;
+      audioSrc: #holo-audio;
       color: #50ffcc;
-      width: 6.4;
-      height: 2.4;
+      
+      height: 2.4; domeRadius: 4.0;      domeArc: -7;         width: -3;
       volume: 0.9;
       autoplay: true;">
   </a-entity>
@@ -579,6 +583,49 @@
   <a-light type="ambient" color="#000000" intensity="0.0"></a-light>
 
 </a-scene>
+
+<button type="button" id="holo-enter-museum"
+  style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 28px;font-family:system-ui,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;background:rgba(0,20,24,.9);color:#50ffcc;border:1px solid #50ffcc;border-radius:2px;box-shadow:0 0 18px rgba(80,255,204,.2);">
+  Enter museum
+</button>
+<script>
+(function () {
+  const btn = document.getElementById('holo-enter-museum');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+
+    // 1. Disable the button so it can't be clicked twice
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.pointerEvents = 'none';
+
+    // 2. Pause hologram audio/video
+    const aud = document.querySelector('#holo-audio');
+    const vid = document.querySelector('#holo-video');
+    if (aud) { aud.pause(); try { aud.currentTime = 0; } catch (e) {} }
+    if (vid) { vid.pause(); try { vid.currentTime = 0; } catch (e) {} }
+    const holo = document.querySelector('#holo-display');
+    const comp = holo && holo.components && holo.components['hologram-video'];
+    if (comp && typeof comp.pauseHolo === 'function') comp.pauseHolo();
+
+    // 3. Fade to black, then navigate to the museum
+    const overlay = document.getElementById('fade-overlay');
+    if (overlay) {
+      overlay.style.display = 'block';
+      overlay.style.transition = 'opacity 1.2s ease';
+      overlay.style.opacity = '0';
+      // Force reflow so transition fires
+      overlay.getBoundingClientRect();
+      overlay.style.opacity = '1';
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1300);
+    } else {
+      window.location.href = 'index.html';
+    }
+  });
+})();
+</script>
 
 </body>
 </html>

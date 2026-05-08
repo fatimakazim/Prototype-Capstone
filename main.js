@@ -123,6 +123,8 @@
         holoVid.muted = false;
       }
 
+      
+
       const FADE_MS = 700;
       fadePlane.setAttribute('animation__ifo',
         `property:material.opacity;from:0;to:1;dur:${FADE_MS};easing:linear`);
@@ -133,6 +135,11 @@
 
         if (introCard) setTimeout(() => introCard.classList.add('visible'), 200);
         window._introComplete = true;
+        setTimeout(() => {
+  if (window.NarrationController) {
+    window.NarrationController.startTour();
+  }
+}, 1800); 
 
         fadePlane.removeAttribute('animation__ifo');
         fadePlane.setAttribute('animation__ifi',
@@ -357,9 +364,19 @@
     const modelScene = document.querySelector('#model-scene');
 
     const scenes360 = {
-      street: document.querySelector('#scene-street'),
-      temple: document.querySelector('#scene-temple'),
-      house:  document.querySelector('#scene-house'),
+      street:        document.querySelector('#scene-street'),
+      temple:        document.querySelector('#scene-temple'),
+      house:         document.querySelector('#scene-house'),
+      margalla:      document.querySelector('#scene-margalla'),
+      banyan:        document.querySelector('#scene-banyan'),
+      mosque:        document.querySelector('#scene-mosque'),
+      restaurant:    document.querySelector('#scene-restaurant'),
+      shops:         document.querySelector('#scene-shops'),
+      neighbourhood: document.querySelector('#scene-neighbourhood'),
+      field:         document.querySelector('#scene-field'),
+      handicraft:    document.querySelector('#scene-handicraft'),
+      villageedge:   document.querySelector('#scene-villageedge'),
+      oldstreets:    document.querySelector('#scene-oldstreets'),
     };
     const streetVid = document.querySelector('#street-360-vid');
 
@@ -367,10 +384,20 @@
     let isTransitioning = false;
 
     const sceneConfig = {
-      street:    { label: 'Village Street — Saidpur',        camPos: '0 0 0', camRot: '0 0 0' },
-      temple:    { label: 'Prem Mandir / Shahi Mosque',      camPos: '0 0 0', camRot: '0 0 0' },
-      house:     { label: 'Abandoned Family Home — Saidpur', camPos: '0 0 0', camRot: '0 0 0' },
-      htmlScene: { label: 'Before Partition — Oral History', camPos: '0 0 0', camRot: '0 0 0' },
+      street:        { label: 'Village Street — Saidpur',                camPos: '0 0 0', camRot: '0 0 0' },
+      temple:        { label: 'Prem Mandir / Shahi Mosque',              camPos: '0 0 0', camRot: '0 0 0' },
+      house:         { label: 'Abandoned Family Home — Saidpur',         camPos: '0 0 0', camRot: '0 0 0' },
+      htmlScene:     { label: 'Before Partition — Oral History',         camPos: '0 0 0', camRot: '0 0 0' },
+      margalla:      { label: 'Margalla Hills Viewpoint — Saidpur',      camPos: '0 0 0', camRot: '0 0 0' },
+      banyan:        { label: 'Banyan Tree — Saidpur',                   camPos: '0 0 0', camRot: '0 0 0' },
+      mosque:        { label: 'Mosque — Saidpur',                        camPos: '0 0 0', camRot: '0 0 0' },
+      restaurant:    { label: 'Restaurant — Saidpur',                    camPos: '0 0 0', camRot: '0 0 0' },
+      shops:         { label: 'Shops — Saidpur',                         camPos: '0 0 0', camRot: '0 0 0' },
+      neighbourhood: { label: 'Neighbourhood — Saidpur',                 camPos: '0 0 0', camRot: '0 0 0' },
+      field:         { label: 'Field — Saidpur',                         camPos: '0 0 0', camRot: '0 0 0' },
+      handicraft:    { label: 'Handicraft Area — Saidpur',               camPos: '0 0 0', camRot: '0 0 0' },
+      villageedge:   { label: 'Village Edge — Saidpur',                  camPos: '0 0 0', camRot: '0 0 0' },
+      oldstreets:    { label: 'Old Residential Streets — Saidpur',       camPos: '0 0 0', camRot: '0 0 0' },
     };
     const MODEL_CAM_POS = '0 0 0.5';
     const MODEL_CAM_ROT = '0 0 0';
@@ -541,329 +568,340 @@
 
 
     /* ════════════════════════════════════════════════════════════════
-       STORY BEATS CONFIG — 4-Beat Guided Tour
+       TOUR STOPS CONFIG — 10-Stop Guided Tour
        ────────────────────────────────────────────────────────────────
-       Central config. Swap audio, adjust focusPoint positions, or
-       update subtitle text here — no logic changes needed elsewhere.
-
-       focusPoint: World-space coords where the narrator glides to.
-                   Adjust to match your actual scene layout.
-                   (Model is at position="0 0.8 -4" scale="0.015")
-
-       focusTarget: CSS selector for the <a-entity narration-focus>
-                    anchor that must exist in #model-scene in HTML.
-
-       audio:       CSS selector for <audio> in <a-assets>.
+       focusPoint coords match the real hotspot world positions from
+       index.html, so the narrator travels the full extent of the model.
+       Route is designed for maximum diagonal travel:
+         SW shops → NW margalla → NE village-edge → SE field
+       Y is raised to 1.55 so the narrator floats visibly above the model.
+       The focus anchor entities in index.html must match these positions.
     ════════════════════════════════════════════════════════════════ */
-    const STORY_BEATS = [
+    const TOUR_STOPS = [
       {
-        id:                 'landscape',
-        title:              'Landscape — Orchards & Springs',
-        audio:              '#audio-beat-1',
-        subtitle:           'The land here remembers everything. The orchards, the springs, the scent of the earth before Partition.',
+        // START near the narrator's spawn point (position="2 1.25 -5")
+        // First move: glide to the south-west Shops corner
+        id:                 'stop-1',
+        title:              'Shops — Village Market',
+        target:             '#focus-shops',
+        audio:              '#audio-stop-1',
+        subtitle:           'Every village begins with its market. Here spices, cloth and gossip moved freely — across faiths, across streets.',
         speakerLabel:       'Memory',
-        focusPoint:         { x:  0.18, y: 1.55, z: -4.20 },
-        focusTarget:        '#focus-trees',
-        highlightColor:     '#66ff99',
+        highlightColor:     '#ddccff',
         highlightIntensity: 1.3,
+        pauseAfterArrival:  800,
+        focusPoint:         { x: -0.80, y: 1.55, z: -3.35 },  // matches #hotspot-shops
       },
       {
-        id:                 'heart',
-        title:              'Heart — Temple & School',
-        audio:              '#audio-beat-2',
-        subtitle:           'The stairs of the temple have slabs with the names of Sikhs and Hindus who donated them. They all lived here together.',
-        speakerLabel:       'Local Man 2',
-        focusPoint:         { x:  0.12, y: 1.55, z: -4.05 },
-        focusTarget:        '#focus-temple',
-        highlightColor:     '#ff9966',
-        highlightIntensity: 1.6,
-      },
-      {
-        id:                 'daily-life',
-        title:              'Daily Life — Water Mill',
-        audio:              '#audio-beat-3',
-        subtitle:           'Do you see that big banyan tree? There used to be a water-powered flour mill under it. Everyone from the village would go there.',
-        speakerLabel:       'Local Man 2',
-        focusPoint:         { x:  0.08, y: 1.52, z: -3.90 },
-        focusTarget:        '#focus-pond',
-        highlightColor:     '#66ccff',
+        // Long diagonal: SW → NW (Margalla Hills viewpoint)
+        id:                 'stop-2',
+        title:              'Margalla Hills — The Viewpoint',
+        target:             '#focus-margalla',
+        audio:              '#audio-stop-2',
+        subtitle:           'From this hill you could see all of Saidpur. The orchards, the springs — the Margalla Hills have witnessed everything.',
+        speakerLabel:       'Memory',
+        highlightColor:     '#b8ffb0',
         highlightIntensity: 1.4,
+        pauseAfterArrival:  800,
+        focusPoint:         { x: -0.90, y: 1.55, z: -4.80 },  // matches #hotspot-margalla
       },
       {
-        id:                 'transition',
-        title:              'Transition — Partition',
-        audio:              '#audio-beat-4',
+        // NW → central-west Handicraft area
+        id:                 'stop-3',
+        title:              'Handicraft Area',
+        target:             '#focus-handicraft',
+        audio:              '#audio-stop-3',
+        subtitle:           'The craftsmen of Saidpur were known across the region. Their work outlasted the families who commissioned it.',
+        speakerLabel:       'Local Man 1',
+        highlightColor:     '#ffddaa',
+        highlightIntensity: 1.2,
+        pauseAfterArrival:  800,
+        focusPoint:         { x: -0.95, y: 1.55, z: -4.55 },  // matches #hotspot-handicraft
+      },
+      {
+        // West → central Mosque
+        id:                 'stop-4',
+        title:              'The Mosque',
+        target:             '#focus-mosque-hs',
+        audio:              '#audio-stop-4',
         subtitle:           'It was a beautiful mix of people. After the Hindus left, others moved into their houses. The village changed, but the walls remember.',
         speakerLabel:       'Local Man 1',
-        focusPoint:         { x: -0.05, y: 1.55, z: -4.10 },
-        focusTarget:        '#focus-mosque',
-        highlightColor:     '#ffcc66',
+        highlightColor:     '#ffe0a0',
+        highlightIntensity: 1.5,
+        pauseAfterArrival:  800,
+        focusPoint:         { x: -0.55, y: 1.55, z: -4.10 },  // matches #hotspot-mosque
+      },
+      {
+        // Centre → Temple (short, contextual)
+        id:                 'stop-5',
+        title:              'The Temple Courtyard',
+        target:             '#focus-temple',
+        audio:              '#audio-stop-5',
+        subtitle:           'The stairs of the temple have slabs with the names of Sikhs and Hindus who donated them. They all lived here together.',
+        speakerLabel:       'Local Man 2',
+        highlightColor:     '#9ee8ff',
+        highlightIntensity: 1.6,
+        pauseAfterArrival:  800,
+        focusPoint:         { x:  0.12, y: 1.55, z: -4.05 },  // matches #hotspot-temple
+      },
+      {
+        // Long diagonal: centre → far NE Village Edge
+        id:                 'stop-6',
+        title:              'Village Edge — The Perimeter',
+        target:             '#focus-villageedge',
+        audio:              '#audio-stop-6',
+        subtitle:           'At the edge of the village the fields begin. In 1947 many families walked out through here, believing they would return within weeks.',
+        speakerLabel:       'Local Man 1',
+        highlightColor:     '#ffc8e8',
+        highlightIntensity: 1.3,
+        pauseAfterArrival:  900,
+        focusPoint:         { x:  1.05, y: 1.55, z: -4.90 },  // matches #hotspot-villageedge
+      },
+      {
+        // NE → east Neighbourhood
+        id:                 'stop-7',
+        title:              'The Neighbourhood',
+        target:             '#focus-neighbourhood',
+        audio:              '#audio-stop-7',
+        subtitle:           'Muslim, Hindu, Sikh families lived side by side in these lanes. They did not call themselves by religion — they called each other by name.',
+        speakerLabel:       'Memory',
+        highlightColor:     '#aaddff',
+        highlightIntensity: 1.4,
+        pauseAfterArrival:  800,
+        focusPoint:         { x:  1.00, y: 1.55, z: -4.10 },  // matches #hotspot-neighbourhood
+      },
+      {
+        // East → Banyan Tree (north-east quadrant)
+        id:                 'stop-8',
+        title:              'The Banyan Tree',
+        target:             '#focus-banyan',
+        audio:              '#audio-stop-8',
+        subtitle:           'Do you see that big banyan tree? There used to be a water-powered flour mill under it. Everyone from the village would go there.',
+        speakerLabel:       'Local Man 2',
+        highlightColor:     '#88dd66',
+        highlightIntensity: 1.4,
+        pauseAfterArrival:  800,
+        focusPoint:         { x:  0.75, y: 1.55, z: -4.70 },  // matches #hotspot-banyan
+      },
+      {
+        // Long diagonal: NE → SE Old Streets
+        id:                 'stop-9',
+        title:              'Old Residential Streets',
+        target:             '#focus-oldstreets',
+        audio:              '#audio-stop-9',
+        subtitle:           'These walls still hold the handprints of the families who plastered them. Different hands now, but the same clay.',
+        speakerLabel:       'Local Man 1',
+        highlightColor:     '#ffeecc',
         highlightIntensity: 1.2,
+        pauseAfterArrival:  800,
+        focusPoint:         { x:  0.60, y: 1.55, z: -3.20 },  // matches #hotspot-oldstreets
+      },
+      {
+        // SE → far south Field — final stop, maximum south extent
+        id:                 'stop-10',
+        title:              'The Fields — End of Tour',
+        target:             '#focus-field',
+        audio:              '#audio-stop-10',
+        subtitle:           'Memory is not the past. It is the present, still waiting to be acknowledged. Thank you for walking through Saidpur with us.',
+        speakerLabel:       'Memory',
+        highlightColor:     '#ccff88',
+        highlightIntensity: 1.8,
+        pauseAfterArrival:  1200,
+        focusPoint:         { x:  0.10, y: 1.55, z: -3.00 },  // matches #hotspot-field
       },
     ];
 
 
     /* ════════════════════════════════════════════════════════════════
-       NARRATION CONTROLLER  v4 — 4-Beat Guided Tour Engine
+       NARRATION CONTROLLER  (v5 — 10-Stop Tour Engine)
        ────────────────────────────────────────────────────────────────
-       Full state machine:
-         IDLE            → waiting for user to approach narrator
-         MOVING_TO_NEXT  → narrator gliding toward next beat's focus point
-         ARRIVAL_PAUSE   → ~2s silent pause after arrival before audio
-         PLAYING_BEAT    → audio + subtitle + focus ring active
-         WAITING_FOR_USER → user wandered too far; narrator pauses in place
-         COMPLETED       → all beats done; hotspots unlocked
-
-       Architecture:
-         • This controller owns ALL story logic and state transitions.
-         • polyhedron-narrator component owns visual movement + effects.
-         • Controller drives movement via comp.activeFocusPoint / comp.isMoving.
-         • comp.onArrivalCallback is called by the component on arrival.
-         • Events are emitted on narratorEl so external UI can react.
-         • SOS / scene transitions always work: pause() / resume() API.
+       MUST live inside init() so narratorEl is in scope.
+       5-state machine. Fully automated — startTour() begins the loop.
+       States: IDLE → MOVING → ARRIVED → PLAYING_AUDIO → COMPLETED
     ════════════════════════════════════════════════════════════════ */
     const NarrationController = (function () {
 
       const STATES = Object.freeze({
-        IDLE:             'IDLE',
-        MOVING_TO_NEXT:   'MOVING_TO_NEXT',
-        ARRIVAL_PAUSE:    'ARRIVAL_PAUSE',
-        PLAYING_BEAT:     'PLAYING_BEAT',
-        WAITING_FOR_USER: 'WAITING_FOR_USER',
-        COMPLETED:        'COMPLETED',
+        IDLE:          'IDLE',
+        MOVING:        'MOVING',
+        ARRIVED:       'ARRIVED',
+        PLAYING_AUDIO: 'PLAYING_AUDIO',
+        COMPLETED:     'COMPLETED',
       });
 
-      /* ── Tunable constants ─────────────────────────────────────── */
-      const PROXIMITY_TRIGGER_DIST = 2.2;   // metres — user must reach to start tour
-      const WAIT_PROXIMITY_DIST    = 4.5;   // metres — beyond this, narrator waits
-      const ARRIVAL_PAUSE_MS       = 2000;  // ms silent pause after arriving
-      const POLL_INTERVAL_MS       = 300;   // proximity check interval (ms)
+      let _state         = STATES.IDLE;
+      let _comp          = null;
+      let _stopIndex     = -1;
+      let _suspended     = false;
+      let _arrivalTimer  = null;
+      let _audioEl       = null;
+      let _audioEndCb    = null;
+      let _fallbackTimer = null;
 
-      /* ── Internal state ────────────────────────────────────────── */
-      let _state              = STATES.IDLE;
-      let _comp               = null;   // polyhedron-narrator component instance
-      let _beatIndex          = -1;     // current beat (0-based), -1 = not started
-      let _pollTimer          = null;
-      let _arrivalTimer       = null;
-      let _audioEl            = null;   // currently playing <audio> element
-      let _audioEndCb         = null;   // bound 'ended' listener
-      let _suspended          = false;  // true when paused by scene transition/SOS
-      let _waitingBeforeState = null;   // state to resume after WAITING_FOR_USER
+      function _stop () { return TOUR_STOPS[_stopIndex]; }
 
-      /* ── Init: called by wireNarrator() once component is ready ── */
-      function init (narratorComp) {
-        if (_comp) {
-          console.warn('[NarrationController] Already initialised.');
-          return;
-        }
-        _comp      = narratorComp;
-        _pollTimer = setInterval(_checkProximity, POLL_INTERVAL_MS);
-        console.log('[NarrationController] Ready — IDLE, polling every 300ms.');
+      function _setState (next) {
+        console.log(`[TourEngine] ${_state} → ${next}  (stop ${_stopIndex})`);
+        _state = next;
       }
 
-      /* ── Proximity polling (IDLE only) ─────────────────────────── */
-      function _checkProximity () {
-        if (_state !== STATES.IDLE) {
-          clearInterval(_pollTimer);
-          _pollTimer = null;
-          return;
-        }
-        if (currentScene !== 'model') return;
-
-        const dist = _comp._camPos.distanceTo(_comp._worldPos);
-        if (dist < PROXIMITY_TRIGGER_DIST) {
-          clearInterval(_pollTimer);
-          _pollTimer = null;
-          _startTour();
-        }
+      /* narratorEl is in scope from init() — this is why NarrationController
+         MUST be defined inside init(), not at the outer IIFE level. */
+      function _emit (name, detail) {
+        if (narratorEl) narratorEl.emit(name, detail || {});
       }
 
-      /* ── Kick off the tour from beat 0 ─────────────────────────── */
-      function _startTour () {
-        console.log('[NarrationController] 🎯 Proximity trigger — starting guided tour.');
-        _beatIndex = 0;
-        _moveToNextBeat();
+      function _clearAudio () {
+        if (_audioEl && _audioEndCb) {
+          _audioEl.removeEventListener('ended', _audioEndCb);
+          _audioEndCb = null;
+        }
+        if (_fallbackTimer) { clearTimeout(_fallbackTimer); _fallbackTimer = null; }
+        _audioEl = null;
       }
 
-      /* ── Begin movement phase toward current beat's focus point ── */
-      function _moveToNextBeat () {
-        if (_beatIndex >= STORY_BEATS.length) {
-          _complete();
-          return;
+      function _clearArrivalTimer () {
+        if (_arrivalTimer) { clearTimeout(_arrivalTimer); _arrivalTimer = null; }
+      }
+
+      /* ── Phase 1: move narrator to stop position ─────────────────── */
+      function _moveToStop (index) {
+        _stopIndex = index;
+        if (_stopIndex >= TOUR_STOPS.length) { _complete(); return; }
+
+        const stop = _stop();
+        _setState(STATES.MOVING);
+        _emit('narrator-moving', { stopIndex: _stopIndex, stop });
+
+        if (stop.target && !document.querySelector(stop.target)) {
+          console.warn(`[TourEngine] Focus target "${stop.target}" not found — continuing.`);
         }
 
-        const beat = STORY_BEATS[_beatIndex];
-        _setState(STATES.MOVING_TO_NEXT);
-        _emit('narrator-moving', { beatIndex: _beatIndex, beat });
-
-        // Hand the target to the component — it lerps there each tick()
-        _comp.activeFocusPoint.set(beat.focusPoint.x, beat.focusPoint.y, beat.focusPoint.z);
+        _comp.activeFocusPoint.set(stop.focusPoint.x, stop.focusPoint.y, stop.focusPoint.z);
         _comp.isMoving          = true;
         _comp.onArrivalCallback = _onArrival;
 
-        console.log(`[NarrationController] ▶ Moving to beat ${_beatIndex}: "${beat.title}"`);
+        console.log(`[TourEngine] ▶ Moving → stop ${_stopIndex}: "${stop.title}"`);
       }
 
-      /* ── Called by polyhedron-narrator component when it arrives ─ */
+      /* ── Phase 2: silent pause after arrival ─────────────────────── */
       function _onArrival () {
-        if (_state !== STATES.MOVING_TO_NEXT) return;
+        if (_state !== STATES.MOVING) return;
         if (_suspended) return;
 
-        _setState(STATES.ARRIVAL_PAUSE);
+        _setState(STATES.ARRIVED);
         _comp.isMoving = false;
-        _emit('narrator-arrived', { beatIndex: _beatIndex });
+        _emit('narrator-arrived', { stopIndex: _stopIndex });
 
-        console.log(`[NarrationController] ⏸ Arrived at beat ${_beatIndex} — ${ARRIVAL_PAUSE_MS}ms pause.`);
+        const pauseMs = (_stop().pauseAfterArrival != null) ? _stop().pauseAfterArrival : 800;
+        console.log(`[TourEngine] ⏸ Arrived at stop ${_stopIndex} — pause ${pauseMs}ms.`);
 
         _arrivalTimer = setTimeout(() => {
           if (_suspended) return;
-          _playBeat();
-        }, ARRIVAL_PAUSE_MS);
+          _playAudio();
+        }, pauseMs);
       }
 
-      /* ── Play current beat: audio + subtitle + focus ring ────────── */
-      function _playBeat () {
-        const beat = STORY_BEATS[_beatIndex];
-        _setState(STATES.PLAYING_BEAT);
+      /* ── Phase 3: play audio + subtitle, then wait for end ───────── */
+      function _playAudio () {
+        const stop = _stop();
+        _setState(STATES.PLAYING_AUDIO);
         _comp._isSpeaking = true;
 
-        // Activate the landmark focus ring
-        if (beat.focusTarget) {
-          FocusManager.activate(beat.focusTarget, beat.highlightColor, beat.highlightIntensity);
+        if (stop.target) {
+          FocusManager.activate(stop.target, stop.highlightColor, stop.highlightIntensity);
         }
 
-        // Emit beat-started for any external UI (e.g. SOS button visibility)
-        _emit('beat-started', { beatIndex: _beatIndex, beat });
-
-        // Drive NarratorSubtitle via the same narration-state-enter event
-        // that the subtitle system already listens to — zero coupling change.
         if (narratorEl) {
-          const customEvt = new CustomEvent('narration-state-enter', {
+          narratorEl.dispatchEvent(new CustomEvent('narration-state-enter', {
             detail: {
-              id: beat.id,
+              id: stop.id,
               state: {
-                text:               beat.subtitle,
-                speakerLabel:       beat.speakerLabel,
-                focusTarget:        beat.focusTarget,
-                highlightColor:     beat.highlightColor,
-                highlightIntensity: beat.highlightIntensity,
+                text:               stop.subtitle,
+                speakerLabel:       stop.speakerLabel       || '',
+                focusTarget:        stop.target             || null,
+                highlightColor:     stop.highlightColor     || '#50ffcc',
+                highlightIntensity: stop.highlightIntensity || 1.0,
               },
             },
-          });
-          narratorEl.dispatchEvent(customEvt);
-        }
-
-        // Start audio via NarrationAudioManager (the same manager from v3)
-        if (beat.audio) {
-          _audioEl = document.querySelector(beat.audio);
-          if (_audioEl) {
-            NarrationAudioManager.play(_audioEl, 0.9, 300);
-
-            _audioEndCb = () => _onBeatEnd();
-            _audioEl.addEventListener('ended', _audioEndCb, { once: true });
-
-            // Duration fallback: if 'ended' never fires, advance after audio
-            // duration + 1s buffer (guards against CORS/silent failures)
-            _audioEl.addEventListener('loadedmetadata', () => {
-              if (_state !== STATES.PLAYING_BEAT) return;
-              const fallbackMs = (_audioEl.duration || 10) * 1000 + 1000;
-              const fallbackId = setTimeout(() => {
-                if (_state === STATES.PLAYING_BEAT) {
-                  console.warn('[NarrationController] "ended" fallback fired for beat', _beatIndex);
-                  _onBeatEnd();
-                }
-              }, fallbackMs);
-              _audioEl.addEventListener('ended', () => clearTimeout(fallbackId), { once: true });
-            }, { once: true });
-
-          } else {
-            console.warn('[NarrationController] Audio element not found:', beat.audio);
-            setTimeout(_onBeatEnd, 8000);
-          }
-        } else {
-          // No audio — advance after 5s default
-          setTimeout(_onBeatEnd, 5000);
-        }
-
-        console.log(`[NarrationController] 🔊 Playing beat ${_beatIndex}: "${beat.title}"`);
-      }
-
-      /* ── Beat finished — clean up, advance ──────────────────────── */
-      function _onBeatEnd () {
-        if (_state !== STATES.PLAYING_BEAT) return;
-        if (_suspended) return;
-
-        _removeAudioEndListener();
-        FocusManager.deactivate();
-        _comp._isSpeaking = false;
-        _comp._isWaiting  = false;
-
-        _emit('beat-ended', { beatIndex: _beatIndex, beat: STORY_BEATS[_beatIndex] });
-
-        if (narratorEl) {
-          narratorEl.dispatchEvent(new CustomEvent('narration-state-exit', {
-            detail: { id: STORY_BEATS[_beatIndex].id },
           }));
         }
 
-        console.log(`[NarrationController] ✅ Beat ${_beatIndex} ended.`);
+        _emit('stop-started', { stopIndex: _stopIndex, stop });
 
-        _beatIndex++;
-        if (_beatIndex >= STORY_BEATS.length) {
+        if (!stop.audio) {
+          console.log(`[TourEngine] 🔇 Stop ${_stopIndex} has no audio — advancing in 5 s.`);
+          _fallbackTimer = setTimeout(_onAudioEnd, 5000);
+          return;
+        }
+
+        _audioEl = document.querySelector(stop.audio);
+
+        if (!_audioEl) {
+          console.warn(`[TourEngine] Audio "${stop.audio}" not found — advancing in 5 s.`);
+          _fallbackTimer = setTimeout(_onAudioEnd, 5000);
+          return;
+        }
+
+        NarrationAudioManager.play(_audioEl, 0.9, 300);
+        console.log(`[TourEngine] 🔊 Stop ${_stopIndex}: "${stop.title}" — playing audio.`);
+
+        /* Primary listener — fires _onAudioEnd when audio finishes naturally */
+        _audioEndCb = () => _onAudioEnd();
+        _audioEl.addEventListener('ended', _audioEndCb, { once: true });
+
+        /* Hard fallback — set immediately, before waiting for metadata.
+           If audio has a known duration, we refine the timeout once metadata
+           loads. If metadata never loads (missing file / CORS), the hard
+           fallback of 8 s still fires and the tour continues.           */
+        _fallbackTimer = setTimeout(() => {
+          if (_state === STATES.PLAYING_AUDIO) {
+            console.warn(`[TourEngine] Hard fallback fired for stop ${_stopIndex} — no audio or ended never received.`);
+            _onAudioEnd();
+          }
+        }, 8000);
+
+        /* Refine the fallback once we know the real duration */
+        _audioEl.addEventListener('loadedmetadata', () => {
+          if (_state !== STATES.PLAYING_AUDIO) return;
+          if (_audioEl.duration && isFinite(_audioEl.duration)) {
+            if (_fallbackTimer) { clearTimeout(_fallbackTimer); _fallbackTimer = null; }
+            _fallbackTimer = setTimeout(() => {
+              if (_state === STATES.PLAYING_AUDIO) {
+                console.warn(`[TourEngine] Duration fallback fired for stop ${_stopIndex}.`);
+                _onAudioEnd();
+              }
+            }, _audioEl.duration * 1000 + 1500);
+          }
+        }, { once: true });
+      }
+
+      /* ── Phase 4: advance to next stop ──────────────────────────── */
+      function _onAudioEnd () {
+        if (_state !== STATES.PLAYING_AUDIO) return;
+        if (_suspended) return;
+
+        _clearAudio();
+        FocusManager.deactivate();
+        _comp._isSpeaking = false;
+
+        if (narratorEl) {
+          narratorEl.dispatchEvent(new CustomEvent('narration-state-exit', {
+            detail: { id: _stop().id },
+          }));
+        }
+        _emit('stop-ended', { stopIndex: _stopIndex, stop: _stop() });
+        console.log(`[TourEngine] ✅ Stop ${_stopIndex} ended.`);
+
+        const next = _stopIndex + 1;
+        if (next >= TOUR_STOPS.length) {
           _complete();
         } else {
-          _checkUserThenContinue();
+          setTimeout(() => { if (!_suspended) _moveToStop(next); }, 300);
         }
       }
 
-      /* ── Check user is close enough before moving to next beat ──── */
-      function _checkUserThenContinue () {
-        const dist = _comp._camPos.distanceTo(_comp._worldPos);
-        if (dist > WAIT_PROXIMITY_DIST) {
-          _waitForUser(STATES.MOVING_TO_NEXT);
-        } else {
-          _moveToNextBeat();
-        }
-      }
-
-      /* ── User too far — pause and wait ──────────────────────────── */
-      function _waitForUser (resumeState) {
-        if (_state === STATES.WAITING_FOR_USER) return;
-        _waitingBeforeState = resumeState || STATES.MOVING_TO_NEXT;
-        _setState(STATES.WAITING_FOR_USER);
-        _comp.isMoving   = false;
-        _comp._isWaiting = true;
-        NarrationAudioManager.pause();
-        _emit('narrator-waiting', { beatIndex: _beatIndex });
-        console.log('[NarrationController] ⏳ Waiting for user to return...');
-
-        const waitPoll = setInterval(() => {
-          if (_state !== STATES.WAITING_FOR_USER) { clearInterval(waitPoll); return; }
-          if (_suspended) return;
-          const dist = _comp._camPos.distanceTo(_comp._worldPos);
-          if (dist <= WAIT_PROXIMITY_DIST) {
-            clearInterval(waitPoll);
-            _resumeAfterWait();
-          }
-        }, 500);
-      }
-
-      /* ── User returned — resume from correct phase ──────────────── */
-      function _resumeAfterWait () {
-        console.log('[NarrationController] 👣 User returned — resuming.');
-        _comp._isWaiting = false;
-        const prev = _waitingBeforeState || STATES.MOVING_TO_NEXT;
-        _waitingBeforeState = null;
-
-        if (prev === STATES.PLAYING_BEAT) {
-          _setState(STATES.PLAYING_BEAT);
-          NarrationAudioManager.resume(0.9);
-        } else {
-          _moveToNextBeat();
-        }
-      }
-
-      /* ── All beats done ─────────────────────────────────────────── */
+      /* ── Tour complete ───────────────────────────────────────────── */
       function _complete () {
         _setState(STATES.COMPLETED);
         _comp._isSpeaking = false;
@@ -871,101 +909,79 @@
         _comp._isWaiting  = false;
         FocusManager.deactivate();
         NarrationAudioManager.stop(800);
-
-        _emit('narration-complete', {});
         if (narratorEl) {
           narratorEl.dispatchEvent(new CustomEvent('narration-complete', { detail: {} }));
         }
-
-        console.log('[NarrationController] 🎉 Narration complete. Hotspots unlocked.');
+        _emit('narration-complete', {});
+        console.log('[TourEngine] 🎉 Tour complete. Hotspots unlocked.');
       }
 
-      /* ── Emit event on narratorEl (A-Frame style) ───────────────── */
-      function _emit (eventName, detail) {
-        if (narratorEl) narratorEl.emit(eventName, detail);
+      function init (narratorComp) {
+        if (_comp) { console.warn('[TourEngine] Already initialised.'); return; }
+        _comp = narratorComp;
+        console.log('[TourEngine] Ready — IDLE. Call startTour() to begin.');
       }
 
-      /* ── State transition ───────────────────────────────────────── */
-      function _setState (newState) {
-        console.log(`[NarrationController] ${_state} → ${newState}`);
-        _state = newState;
-      }
-
-      /* ── Remove audio end listener safely ──────────────────────── */
-      function _removeAudioEndListener () {
-        if (_audioEl && _audioEndCb) {
-          _audioEl.removeEventListener('ended', _audioEndCb);
-          _audioEndCb = null;
-        }
-      }
-
-      /* ── PUBLIC API ─────────────────────────────────────────────── */
       return {
         init,
-
-        /** Current state string (one of STATES values) */
-        getState () { return _state; },
-
-        /** Current beat index (0–3), or -1 before start */
-        getBeatIndex () { return _beatIndex; },
-
-        /** STATES enum (for external comparisons) */
         STATES,
 
-        /** Pause narration — called on scene transition or SOS */
+        startTour () {
+          if (_state !== STATES.IDLE) {
+            console.warn('[TourEngine] startTour() ignored — not IDLE (state:', _state, ')');
+            return;
+          }
+          if (!_comp) { console.error('[TourEngine] startTour() — component not wired.'); return; }
+          console.log('[TourEngine] 🚀 startTour() called — beginning 10-stop tour.');
+          _moveToStop(0);
+        },
+
         pause () {
           if (_suspended) return;
           _suspended = true;
           NarrationAudioManager.pause();
-          _removeAudioEndListener();
-          if (_arrivalTimer) { clearTimeout(_arrivalTimer); _arrivalTimer = null; }
-          if (_comp) _comp.isMoving = false;
-          console.log('[NarrationController] ⏸ Suspended.');
+          _clearAudio();
+          _clearArrivalTimer();
+          if (_comp) { _comp.isMoving = false; }
+          console.log('[TourEngine] ⏸ Paused.');
         },
 
-        /** Resume narration */
         resume () {
           if (!_suspended) return;
           _suspended = false;
-          console.log('[NarrationController] ▶ Resumed.');
-
-          if      (_state === STATES.MOVING_TO_NEXT)  {
-            _comp.isMoving = true;
-            _comp.onArrivalCallback = _onArrival;
+          console.log('[TourEngine] ▶ Resumed from state:', _state);
+          switch (_state) {
+            case STATES.MOVING:
+              _comp.isMoving = true;
+              _comp.onArrivalCallback = _onArrival;
+              break;
+            case STATES.ARRIVED:
+              _arrivalTimer = setTimeout(() => { if (!_suspended) _playAudio(); }, _stop().pauseAfterArrival || 800);
+              break;
+            case STATES.PLAYING_AUDIO:
+              NarrationAudioManager.resume(0.9);
+              break;
           }
-          else if (_state === STATES.ARRIVAL_PAUSE)   {
-            _arrivalTimer = setTimeout(() => { if (!_suspended) _playBeat(); }, ARRIVAL_PAUSE_MS);
-          }
-          else if (_state === STATES.PLAYING_BEAT)    {
-            NarrationAudioManager.resume(0.9);
-          }
-          // WAITING_FOR_USER: wait-poll loop resumes naturally
         },
 
-        /** Force-start from idle (testing / VR trigger button) */
-        forceStart () {
-          if (_state !== STATES.IDLE) {
-            console.warn('[NarrationController] forceStart ignored — not idle.');
-            return;
+        goToStop (index) {
+          if (index < 0 || index >= TOUR_STOPS.length) {
+            console.warn('[TourEngine] goToStop: index out of range:', index); return;
           }
-          if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
-          _startTour();
-        },
-
-        /** Jump directly to a beat by index (0–3) */
-        goToBeat (index) {
-          if (index < 0 || index >= STORY_BEATS.length) return;
-          _removeAudioEndListener();
-          if (_arrivalTimer) { clearTimeout(_arrivalTimer); _arrivalTimer = null; }
-          FocusManager.deactivate();
-          NarrationAudioManager.stop(200);
+          _clearAudio(); _clearArrivalTimer();
+          FocusManager.deactivate(); NarrationAudioManager.stop(200);
           if (_comp) { _comp._isSpeaking = false; _comp._isWaiting = false; }
-          _beatIndex = index;
-          _moveToNextBeat();
+          _state = STATES.IDLE;
+          _moveToStop(index);
         },
 
-        /** Read-only reference to story beats */
-        get beats () { return STORY_BEATS; },
+        forceStart ()    { this.startTour(); },
+        goToBeat (i)     { this.goToStop(i); },
+        getBeatIndex ()  { return _stopIndex; },
+        getState ()      { return _state; },
+        getStopIndex ()  { return _stopIndex; },
+        get stops ()     { return TOUR_STOPS; },
+        get beats ()     { return TOUR_STOPS; },
       };
     })();
 
@@ -991,7 +1007,7 @@
       }
 
       NarrationController.init(comp);
-      console.log('[wireNarrator] ✅ NarrationController wired. Beats:', STORY_BEATS.length);
+      console.log('[wireNarrator] ✅ NarrationController wired. Stops:', TOUR_STOPS.length);
     }
     wireNarrator();
 
@@ -1149,11 +1165,40 @@
           // Resume narration when returning to model scene
           NarrationController.resume();
         } else {
-          const sc = scenes360[sceneName];
-          if (sc) sc.setAttribute('visible', 'true');
-          if (sceneName === 'street' && streetVid) streetVid.play().catch(() => {});
-          if (cameraRig) {
-            const cfg = sceneConfig[sceneName];
+  const sc = scenes360[sceneName];
+  if (sc) sc.setAttribute('visible', 'true');
+  
+ // Play the specific 360 video for the entered scene
+const vidId = sceneName === 'street' ? '#street-360-vid'
+            : sceneName === 'temple' ? '#temple-360-vid'
+            : `#${sceneName}-360`;
+
+const activeVid = document.querySelector(vidId);
+if (activeVid && activeVid.tagName === 'VIDEO') {
+  activeVid.muted = true;          // ← REQUIRED for autoplay in VR/browsers
+  activeVid.currentTime = 0;       // ← restart from beginning
+  activeVid.loop = true;           // ← keep looping the 360
+  const playPromise = activeVid.play();
+  if (playPromise !== undefined) {
+    playPromise.catch((err) => {
+      console.warn('[VR] Video autoplay blocked for', vidId, err.message);
+      // Fallback: try again on next user interaction
+      const retry = () => { activeVid.play().catch(() => {}); };
+      document.addEventListener('click',      retry, { once: true });
+      document.addEventListener('touchstart', retry, { once: true });
+    });
+  }
+}
+
+  // ADDED: Resume A-Frame sounds (like the Temple audio) upon re-entry
+  if (sc) {
+    sc.querySelectorAll('a-sound').forEach(snd => {
+      if (snd.components.sound) snd.components.sound.playSound();
+    });
+  }
+
+  if (cameraRig) {
+    const cfg = sceneConfig[sceneName];
             if (cfg) {
               cameraRig.setAttribute('position', cfg.camPos);
               cameraRig.setAttribute('rotation', cfg.camRot);
@@ -1180,16 +1225,30 @@
       if (target.dataset.nav === 'back') transitionTo('model');
     });
 
-    function hide360All () {
-      Object.values(scenes360).forEach(s => {
-        if (!s) return;
-        s.setAttribute('visible', 'false');
-        s.querySelectorAll('a-sound').forEach(snd => {
-          if (snd.components.sound) snd.components.sound.pauseSound();
-        });
-      });
-      closeAllPanels();
+ function hide360All () {
+  Object.values(scenes360).forEach(s => {
+    if (!s) return;
+    s.setAttribute('visible', 'false');
+    s.querySelectorAll('a-sound').forEach(snd => {
+      if (snd.components.sound) snd.components.sound.pauseSound();
+    });
+  });
+  closeAllPanels();
+  
+  // Pause ALL 360 videos so audio stops and performance is saved
+  const allVideoIds = [
+    '#street-360-vid', '#temple-360-vid', '#margalla-360', '#banyan-360', '#mosque-360',
+    '#restaurant-360', '#shops-360', '#neighbourhood-360', '#field-360',
+    '#handicraft-360', '#villageedge-360', '#oldstreets-360'
+  ];
+  
+  allVideoIds.forEach(id => {
+    const vid = document.querySelector(id);
+    if (vid && vid.pause) {
+      vid.pause();
     }
+  });
+}
 
 
     /* ════════════════════════════════════════════════════════════════
@@ -1212,7 +1271,7 @@
       if (src) { const r = document.querySelector(src); if (r) r.pause(); }
     }
     function closeAllPanels () {
-      ['street','temple','house'].forEach(k => {
+      ['street','temple','house','margalla','banyan','mosque','restaurant','shops','neighbourhood','field','handicraft','villageedge','oldstreets'].forEach(k => {
         ['video','photo'].forEach(t => {
           const p = document.querySelector(`#${t}-panel-${k}`);
           if (p) { p.setAttribute('visible', 'false'); pausePanelVideo(p); }
@@ -1270,12 +1329,18 @@
         'vp-speaker-man2':        document.querySelector('#vp-speaker-man2'),
       };
 
-      const returnBtn = document.querySelector('#vp-return-btn');
-      if (returnBtn) {
-        returnBtn.addEventListener('click', () => {
-          if (overlay) overlay.classList.remove('visible');
-        });
-      }
+     const returnBtn = document.querySelector('#vp-return-btn');
+if (returnBtn) {
+  returnBtn.addEventListener('click', () => {
+    if (overlay) overlay.classList.remove('visible');
+    
+    // ADDED: Pause the interview audio and reset it to the beginning
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = 0; 
+    }
+  });
+}
 
       return {};
     })();

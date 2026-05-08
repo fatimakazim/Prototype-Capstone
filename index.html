@@ -413,14 +413,40 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     <audio id="holo-audio"
            src="assets/audio/ambient-village.mp3"
            preload="auto"
+           loop="true"
            crossorigin="anonymous"></audio>
 
+
+           <!-- ── Guided Tour Audio ── -->
+<audio id="audio-stop-1"  src="assets/audio/stop-01.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-2"  src="assets/audio/stop-02.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-3"  src="assets/audio/stop-03.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-4"  src="assets/audio/stop-04.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-5"  src="assets/audio/stop-05.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-6"  src="assets/audio/stop-06.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-7"  src="assets/audio/stop-07.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-8"  src="assets/audio/stop-08.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-9"  src="assets/audio/stop-09.mp3"  preload="auto" crossorigin="anonymous"></audio>
+<audio id="audio-stop-10" src="assets/audio/stop-10.mp3"  preload="auto" crossorigin="anonymous"></audio>
     <video id="street-360-vid" src="assets/video/testimony-1.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
-    <img id="temple-360" src="assets/360/temple-360.jpg" crossorigin="anonymous">
-    <img id="house-360"  src="assets/360/house-360.jpg"  crossorigin="anonymous">
+   <video id="temple-360-vid" src="assets/video/temple.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
+    <video id="house-360"  src="assets/video/20260422_163826_317.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
     <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
     <audio id="audio-temple"  src="assets/audio/narration-temple.mp3"  preload="none" crossorigin="anonymous"></audio>
     <audio id="ambient-model" src="assets/audio/ambient-museum.mp3"    preload="none" crossorigin="anonymous"></audio>
+
+    <!-- ── 10 NEW HOTSPOT 360 ASSETS ── -->
+<video id="margalla-360"      src="https://example.com/videos/margalla-360.mp4"      loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="banyan-360"        src="https://example.com/videos/banyan-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="mosque-360"        src="https://example.com/videos/mosque-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="restaurant-360"    src="https://res.cloudinary.com/dfyr9fpzr/video/upload/v1778233754/20260422_165747_638-compressed_cqtsq2.mp4"    loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="shops-360"         src="https://example.com/videos/shops-360.mp4"         loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="neighbourhood-360" src="https://example.com/videos/neighbourhood-360.mp4" loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="field-360"         src="https://example.com/videos/field-360.mp4"         loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="handicraft-360"    src="https://res.cloudinary.com/dfyr9fpzr/video/upload/v1778234772/20260422_170841_265-compressed_zilh3o.mp4"    loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="villageedge-360"   src="https://example.com/videos/villageedge-360.mp4"   loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="oldstreets-360"    src="https://example.com/videos/oldstreets-360.mp4"    loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+
   </a-assets>
 
   <!-- ============================================================
@@ -556,6 +582,21 @@ AFRAME.registerComponent('thumbstick-locomotion', {
        4. Add the entity below and reference it in buildNarrationSequence()
           in main.js via focusTarget: '#focus-myfeature'.
 ══════════════════════════════════════════════════════════════════ -->
+<!-- ── Guided Tour Focus Anchors ──────────────────────────────────
+     Each anchor sits directly above its matching hotspot entity.
+     Y = 1.55 so the pulsing ring floats visibly above the model.
+     X and Z copied exactly from each hotspot's position attribute.
+──────────────────────────────────────────────────────────────── -->
+<a-entity id="focus-shops"         position="-0.80 1.55 -3.35" narration-focus></a-entity>
+<a-entity id="focus-margalla"      position="-0.90 1.55 -4.80" narration-focus></a-entity>
+<a-entity id="focus-handicraft"    position="-0.95 1.55 -4.55" narration-focus></a-entity>
+<a-entity id="focus-mosque-hs"     position="-0.55 1.55 -4.10" narration-focus></a-entity>
+<a-entity id="focus-temple"        position=" 0.12 1.55 -4.05" narration-focus></a-entity>
+<a-entity id="focus-villageedge"   position=" 1.05 1.55 -4.90" narration-focus></a-entity>
+<a-entity id="focus-neighbourhood" position=" 1.00 1.55 -4.10" narration-focus></a-entity>
+<a-entity id="focus-banyan"        position=" 0.75 1.55 -4.70" narration-focus></a-entity>
+<a-entity id="focus-oldstreets"    position=" 0.60 1.55 -3.20" narration-focus></a-entity>
+<a-entity id="focus-field"         position=" 0.10 1.55 -3.00" narration-focus></a-entity>
 
     <!-- Focus anchor: Mosque -->
     <a-entity
@@ -687,27 +728,124 @@ AFRAME.registerComponent('thumbstick-locomotion', {
       <a-text value="Family Home" align="center" color="#ffb3a0" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
     </a-entity>
 
-    <!-- ── Hotspot D: Before Partition (Holographic) ── -->
-    <a-entity
-      id="hotspot-holo"
-      position="-0.05 1.25 -7"
-      hologram-video="videoSrc: #holo-vid;
-                      audioSrc: #holo-audio;
-                      color:    #50ffcc;
-                      width:    6;
-                      height:   0.5;
-                      volume:   0.85;
-                      autoplay: true">
+    <!-- ── Hotspot D: Margalla Hills Viewpoint — far north-west hilltop edge ── -->
+    <a-entity id="hotspot-margalla" class="clickable model-hotspot" position="-0.90 0.97 -4.80" data-scene="margalla" data-label="Margalla Hills Viewpoint — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="margalla" radius="0.025"
+                material="color:#b8ffb0;emissive:#44cc33;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:950;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#b8ffb0;emissive:#b8ffb0;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3200;loop:true;easing:linear"></a-torus>
+      <a-text value="Margalla Hills Viewpoint" align="center" color="#b8ffb0" position="0 0.07 0" scale="0.07 0.07 0.07" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
 
-      <a-box class="clickable model-hotspot"
-             data-scene="htmlScene"
-             data-label="Before Partition — Oral History"
-             width="1.9" height="1.1" depth="0.05"
-             position="0 0 -0.03"
-             material="transparent:true;opacity:0.0"
-             visible="true">
-      </a-box>
+    <!-- ── Hotspot E: Banyan Tree — north-east quadrant ── -->
+    <a-entity id="hotspot-banyan" class="clickable model-hotspot" position="0.75 0.92 -4.70" data-scene="banyan" data-label="Banyan Tree — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="banyan" radius="0.025"
+                material="color:#88dd66;emissive:#44aa22;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1050;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#88dd66;emissive:#88dd66;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:2700;loop:true;easing:linear"></a-torus>
+      <a-text value="Banyan Tree" align="center" color="#88dd66" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
 
+    <!-- ── Hotspot F: Mosque — central-west ── -->
+    <a-entity id="hotspot-mosque" class="clickable model-hotspot" position="-0.55 0.91 -4.10" data-scene="mosque" data-label="Mosque — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="mosque" radius="0.025"
+                material="color:#ffe0a0;emissive:#ddaa00;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:850;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffe0a0;emissive:#ffe0a0;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3800;loop:true;easing:linear"></a-torus>
+      <a-text value="Mosque" align="center" color="#ffe0a0" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot G: Restaurant — south-east lower terrace ── -->
+    <a-entity id="hotspot-restaurant" class="clickable model-hotspot" position="0.80 0.90 -3.40" data-scene="restaurant" data-label="Restaurant — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="restaurant" radius="0.025"
+                material="color:#ffaa88;emissive:#dd5500;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:900;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffaa88;emissive:#ffaa88;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3100;loop:true;easing:linear"></a-torus>
+      <a-text value="Restaurant" align="center" color="#ffaa88" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot H: Shops — south-west lower road ── -->
+    <a-entity id="hotspot-shops" class="clickable model-hotspot" position="-0.80 0.90 -3.35" data-scene="shops" data-label="Shops — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="shops" radius="0.025"
+                material="color:#ddccff;emissive:#8855dd;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1150;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ddccff;emissive:#ddccff;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:2900;loop:true;easing:linear"></a-torus>
+      <a-text value="Shops" align="center" color="#ddccff" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot I: Neighbourhood — east mid-zone ── -->
+    <a-entity id="hotspot-neighbourhood" class="clickable model-hotspot" position="1.00 0.91 -4.10" data-scene="neighbourhood" data-label="Neighbourhood — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="neighbourhood" radius="0.025"
+                material="color:#aaddff;emissive:#2288cc;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1000;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#aaddff;emissive:#aaddff;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3300;loop:true;easing:linear"></a-torus>
+      <a-text value="Neighbourhood" align="center" color="#aaddff" position="0 0.07 0" scale="0.08 0.08 0.08" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot J: Field — far south open land ── -->
+    <a-entity id="hotspot-field" class="clickable model-hotspot" position="0.10 0.90 -3.00" data-scene="field" data-label="Field — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="field" radius="0.025"
+                material="color:#ccff88;emissive:#88cc00;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:820;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ccff88;emissive:#ccff88;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:2600;loop:true;easing:linear"></a-torus>
+      <a-text value="Field" align="center" color="#ccff88" position="0 0.07 0" scale="0.09 0.09 0.09" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot K: Handicraft Area — west mid ── -->
+    <a-entity id="hotspot-handicraft" class="clickable model-hotspot" position="-0.95 0.91 -4.55" data-scene="handicraft" data-label="Handicraft Area — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="handicraft" radius="0.025"
+                material="color:#ffddaa;emissive:#cc7700;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1080;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffddaa;emissive:#ffddaa;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3600;loop:true;easing:linear"></a-torus>
+      <a-text value="Handicraft Area" align="center" color="#ffddaa" position="0 0.07 0" scale="0.08 0.08 0.08" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot L: Village Edge — far north-east perimeter ── -->
+    <a-entity id="hotspot-villageedge" class="clickable model-hotspot" position="1.05 0.93 -4.90" data-scene="villageedge" data-label="Village Edge — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="villageedge" radius="0.025"
+                material="color:#ffc8e8;emissive:#cc3388;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:970;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffc8e8;emissive:#ffc8e8;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:2400;loop:true;easing:linear"></a-torus>
+      <a-text value="Village Edge" align="center" color="#ffc8e8" position="0 0.07 0" scale="0.08 0.08 0.08" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+
+    <!-- ── Hotspot M: Old Residential Streets — south-east dense housing zone ── -->
+    <a-entity id="hotspot-oldstreets" class="clickable model-hotspot" position="0.60 0.90 -3.20" data-scene="oldstreets" data-label="Old Residential Streets — Saidpur">
+      <a-sphere class="clickable model-hotspot" data-scene="oldstreets" radius="0.025"
+                material="color:#ffeecc;emissive:#bb8833;emissiveIntensity:2;transparent:true;opacity:0.9"
+                animation__pulse="property:scale;from:1 1 1;to:1.5 1.5 1.5;dir:alternate;dur:1020;loop:true;easing:easeInOutSine">
+      </a-sphere>
+      <a-torus radius="0.036" radius-tubular="0.005"
+               material="color:#ffeecc;emissive:#ffeecc;emissiveIntensity:1.5;transparent:true;opacity:0.5"
+               animation__spin="property:rotation;from:0 0 0;to:0 360 0;dur:3400;loop:true;easing:linear"></a-torus>
+      <a-text value="Old Residential Streets" align="center" color="#ffeecc" position="0 0.07 0" scale="0.065 0.065 0.065" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
     </a-entity>
 
   </a-entity><!-- /model-scene -->
@@ -728,9 +866,8 @@ AFRAME.registerComponent('thumbstick-locomotion', {
   </a-entity>
 
   <a-entity id="scene-temple" visible="false">
-    <a-sky src="#temple-360" rotation="0 -45 0"></a-sky>
-    <a-sound src="#audio-temple" autoplay="true" loop="true" positional="false" volume="0.4"></a-sound>
-    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+    <a-videosphere src="#temple-360-vid" rotation="0 -90 0"></a-videosphere>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" scale="0.6 0.6 0.6" data-nav="back">
       <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
                   material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
                   animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
@@ -741,6 +878,118 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
   <a-entity id="scene-house" visible="false">
     <a-sky src="#house-360" rotation="0 180 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- ── NEW 360 SCENES ── -->
+
+  <a-entity id="scene-margalla" visible="false">
+    <a-sky src="#margalla-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-banyan" visible="false">
+    <a-sky src="#banyan-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-mosque" visible="false">
+    <a-sky src="#mosque-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-restaurant" visible="false">
+    <a-sky src="#restaurant-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-shops" visible="false">
+    <a-sky src="#shops-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-neighbourhood" visible="false">
+    <a-sky src="#neighbourhood-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-field" visible="false">
+    <a-sky src="#field-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-handicraft" visible="false">
+    <a-sky src="#handicraft-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-villageedge" visible="false">
+    <a-sky src="#villageedge-360" rotation="0 -90 0"></a-sky>
+    <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
+      <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
+                  material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
+                  animation__pulse="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;dur:700;loop:true;easing:easeInOutSine">
+      </a-cylinder>
+      <a-text value="↩  Return to Model" align="center" color="#1a1710" position="0 0.06 0" scale="0.38 0.38 0.38" font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <a-entity id="scene-oldstreets" visible="false">
+    <a-sky src="#oldstreets-360" rotation="0 -90 0"></a-sky>
     <a-entity class="clickable nav-hotspot" position="0 1.4 -5" data-nav="back">
       <a-cylinder class="clickable nav-hotspot" data-nav="back" radius="0.28" height="0.04"
                   material="color:#f0e8d5;emissive:#c9a84c;emissiveIntensity:.6;transparent:true;opacity:.92"
@@ -774,20 +1023,23 @@ AFRAME.registerComponent('thumbstick-locomotion', {
              material="color:#000;shader:flat;transparent:true;opacity:0;depthTest:false;side:double">
     </a-plane>
 
-    <!-- ✅ VR SUBTITLE (CORRECT PLACEMENT) -->
-    <a-entity id="vr-subtitle"
-              position="0 -0.5 -1.2"
+<a-entity id="vr-subtitle"
+              position="0 -0.4 -1.0"
+              geometry="primitive: plane; width: 1.6; height: 0.3"
+              material="color: #00080c; opacity: 0.75; transparent: true; shader: flat"
               text="value: ;
                     align: center;
-                    width: 2.5;
-                    wrapCount: 40;
-                    color: #f0e8d5"
+                    width: 1.5;
+                    wrapCount: 50;
+                    color: #f0e8d5;
+                    zOffset: 0.01"
               visible="false">
     </a-entity>
 
-  </a-entity>
-
   <!-- HANDS -->
+ </a-entity>  <!-- closes #main-camera -->
+
+  <!-- HANDS — must be children of camera-rig, NOT camera -->
   <a-entity id="left-hand"
             laser-controls="hand:left"
             raycaster="objects:.clickable;far:20;lineColor:#c9a84c;lineOpacity:0.6;showLine:true">
@@ -798,9 +1050,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
             raycaster="objects:.clickable;far:20;lineColor:#c9a84c;lineOpacity:0.6;showLine:true">
   </a-entity>
 
-</a-entity>
-
-</a-scene>
+</a-entity>  ← this closes #camera-rig
 <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
 <script src="main.js"></script>
 

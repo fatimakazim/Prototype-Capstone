@@ -581,6 +581,16 @@ AFRAME.registerComponent('polyhedron-narrator', {
     this.onArrivalCallback  = null;                 // called once on arrival
     this._arrivalFired      = false;                // prevent double-fire guard
     this._entityWorldPos    = new THREE.Vector3();  // scratch for world position
+
+    // Cache ghost light — looked up once here so tick() never touches the DOM.
+    this._ghostLight     = null;
+    this._ghostLightObj  = null;
+    this.el.sceneEl.addEventListener('loaded', () => {
+      this._ghostLight = this.el.sceneEl.querySelector('#ghost-light');
+      if (this._ghostLight) {
+        this._ghostLightObj = this._ghostLight.getObject3D('light') || null;
+      }
+    }, { once: true });
   },
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -910,14 +920,14 @@ AFRAME.registerComponent('polyhedron-narrator', {
     this._wire.scale.setScalar(pulsePop);
 
     // ── 10. Ghost light sync ──────────────────────────────────────────────────
-    const ghostLight = this.el.sceneEl.querySelector('#ghost-light');
-    if (ghostLight) {
-      const intensityBase = 0.20
+    // Use cached _ghostLightObj (set in init) — never touches the DOM in tick.
+    if (this._ghostLightObj) {
+      this._ghostLightObj.intensity =
+        0.20
         + this._proximity    * 0.55
         + this._speakingLerp * 0.80
         + this._isMovingLerp * 0.30
         + this._pulse        * 0.35;
-      ghostLight.setAttribute('light', 'intensity', intensityBase);
     }
   },
 
