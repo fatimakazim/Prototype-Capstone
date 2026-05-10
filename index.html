@@ -69,32 +69,39 @@
        in the DOM before main.js runs. The element is created and
        styled by JS in main.js so these styles are optional.
     ───────────────────────────────────────────────────────────────── */
-    #narrator-subtitle {
-      position:        fixed;
-      bottom:          80px;
-      left:            50%;
-      transform:       translateX(-50%);
-      z-index:         1200;
-      max-width:       620px;
-      padding:         12px 24px;
-      background:      rgba(0,8,12,0.82);
-      border:          1px solid rgba(80,255,204,0.35);
-      color:           rgba(240,232,213,0.95);
-      font-family:     'IM Fell English', Georgia, serif;
-      font-size:       16px;
-      line-height:     1.6;
-      letter-spacing:  0.03em;
-      text-align:      center;
-      text-shadow:     0 1px 8px rgba(0,0,0,0.9);
-      backdrop-filter: blur(4px);
-      opacity:         0;
-      transition:      opacity 0.5s ease;
-      pointer-events:  none;
-      border-radius:   2px;
-    }
-    #narrator-subtitle.visible {
-      opacity: 1;
-    }
+  #narrator-subtitle {
+  position:        fixed !important;
+  bottom:          88px !important;
+  left:            50% !important;
+  transform:       translateX(-50%) !important;
+  z-index:         1200 !important;
+  max-width:       700px !important;
+  padding:         16px 40px 18px !important;
+  background:      rgba(0, 0, 0, 0.97) !important;
+  border-top:      3px solid rgba(80,255,204,0.9) !important;
+  border-bottom:   1px solid rgba(80,255,204,0.3) !important;
+  border-left:     1px solid rgba(80,255,204,0.2) !important;
+  border-right:    1px solid rgba(80,255,204,0.2) !important;
+  box-shadow:      0 -4px 60px rgba(0,0,0,1),
+                   0 4px 60px rgba(0,0,0,1),
+                   0 0 0 9999px rgba(0,0,0,0) !important;
+  color:           #ffffff !important;
+  font-family:     'Crimson Pro', Georgia, serif !important;
+  font-size:       21px !important;
+  font-weight:     400 !important;
+  font-style:      italic !important;
+  line-height:     1.7 !important;
+  letter-spacing:  0.03em !important;
+  text-align:      center !important;
+  text-shadow:     none !important;
+  opacity:         0;
+  transition:      opacity 0.5s ease !important;
+  pointer-events:  none !important;
+  border-radius:   0 !important;
+}
+#narrator-subtitle.visible {
+  opacity: 1;
+}
 
     /* VILLAGE OVERLAY */
     #village-partition-overlay { position:fixed; inset:0; z-index:500; display:none; opacity:0; transition:opacity .7s ease; overflow:hidden; font-family:'Crimson Pro',Georgia,serif; background:#c9b89a }
@@ -428,7 +435,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 <audio id="audio-stop-8"  src="assets/audio/stop-08.mp3"  preload="auto" crossorigin="anonymous"></audio>
 <audio id="audio-stop-9"  src="assets/audio/stop-09.mp3"  preload="auto" crossorigin="anonymous"></audio>
 <audio id="audio-stop-10" src="assets/audio/stop-10.mp3"  preload="auto" crossorigin="anonymous"></audio>
-    <video id="street-360-vid" src="assets/video/testimony-1.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
+    <video id="street-360-vid" src="https://sukzessiv.net/~gohai/fatima/export_video%202.MP4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
    <video id="temple-360-vid" src="assets/video/temple.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
     <video id="house-360"  src="assets/video/20260422_163826_317.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
     <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
@@ -437,8 +444,8 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
     <!-- ── 10 NEW HOTSPOT 360 ASSETS ── -->
 <video id="margalla-360"      src="https://example.com/videos/margalla-360.mp4"      loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
-<video id="banyan-360"        src="https://example.com/videos/banyan-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
-<video id="mosque-360"        src="https://example.com/videos/mosque-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="banyan-360"        src="https://sukzessiv.net/~gohai/fatima/banyan-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
+<video id="mosque-360"        src="https://sukzessiv.net/~gohai/fatima/banyan-360.mp4"        loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
 <video id="restaurant-360"    src="https://res.cloudinary.com/dfyr9fpzr/video/upload/v1778233754/20260422_165747_638-compressed_cqtsq2.mp4"    loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
 <video id="shops-360"         src="https://example.com/videos/shops-360.mp4"         loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
 <video id="neighbourhood-360" src="https://example.com/videos/neighbourhood-360.mp4" loop crossorigin="anonymous" playsinline webkit-playsinline muted preload="auto"></video>
@@ -1023,18 +1030,52 @@ AFRAME.registerComponent('thumbstick-locomotion', {
              material="color:#000;shader:flat;transparent:true;opacity:0;depthTest:false;side:double">
     </a-plane>
 
+<!-- VR SUBTITLE — attached to camera, floats comfortably at reading distance -->
 <a-entity id="vr-subtitle"
-              position="0 -0.4 -1.0"
-              geometry="primitive: plane; width: 1.6; height: 0.3"
-              material="color: #00080c; opacity: 0.75; transparent: true; shader: flat"
-              text="value: ;
-                    align: center;
-                    width: 1.5;
-                    wrapCount: 50;
-                    color: #f0e8d5;
-                    zOffset: 0.01"
-              visible="false">
-    </a-entity>
+          position="0 -0.48 -2.4"
+          visible="false">
+
+  <!-- Background panel -->
+  <a-plane width="2.2" height="0.52"
+           material="color:#00080c; opacity:0; transparent:true; shader:flat"
+           animation__show="startEvents:show; property:material.opacity; to:0.88; dur:500; easing:easeOutSine"
+           animation__hide="startEvents:hide; property:material.opacity; to:0; dur:500; easing:easeInSine">
+  </a-plane>
+
+  <!-- Teal border glow ring -->
+  <a-plane width="2.22" height="0.54"
+           position="0 0 -0.002"
+           material="color:#50ffcc; opacity:0.18; transparent:true; shader:flat; side:double">
+  </a-plane>
+
+  <!-- Speaker label -->
+  <a-text id="vr-subtitle-speaker"
+          value=""
+          align="center"
+          position="0 0.10 0.005"
+          color="#50ffcc"
+          width="2.0"
+          wrap-count="60"
+          font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"
+          shader="msdf"
+          negate="false">
+  </a-text>
+
+  <!-- Main subtitle text -->
+  <a-text id="vr-subtitle-text"
+          value=""
+          align="center"
+          position="0 -0.06 0.005"
+          color="#f0e8d5"
+          width="2.0"
+          wrap-count="52"
+          line-height="1.8"
+          font="https://cdn.aframe.io/fonts/DejaVu-sdf.fnt"
+          shader="msdf"
+          negate="false">
+  </a-text>
+
+</a-entity>
 
   <!-- HANDS -->
  </a-entity>  <!-- closes #main-camera -->

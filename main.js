@@ -467,31 +467,40 @@
       if (!el) {
         el = document.createElement('div');
         el.id = 'narrator-subtitle';
-        Object.assign(el.style, {
-          position:       'fixed',
-          bottom:         '80px',
-          left:           '50%',
-          transform:      'translateX(-50%)',
-          zIndex:         '1200',
-          maxWidth:       '620px',
-          padding:        '12px 24px',
-          background:     'rgba(0,8,12,0.82)',
-          border:         '1px solid rgba(80,255,204,0.35)',
-          color:          'rgba(240,232,213,0.95)',
-          fontFamily:     '"IM Fell English", Georgia, serif',
-          fontSize:       '16px',
-          lineHeight:     '1.6',
-          letterSpacing:  '0.03em',
-          textAlign:      'center',
-          textShadow:     '0 1px 8px rgba(0,0,0,0.9)',
-          backdropFilter: 'blur(4px)',
-          opacity:        '0',
-          transition:     'opacity 0.5s ease',
-          pointerEvents:  'none',
-          borderRadius:   '2px',
-        });
         document.body.appendChild(el);
       }
+
+      /* Always apply styles — whether element was pre-existing in HTML
+         or just created above. This ensures the dark backing panel and
+         high-contrast text are guaranteed regardless of CSS load order. */
+      Object.assign(el.style, {
+        position:        'fixed',
+        bottom:          '80px',
+        left:            '50%',
+        transform:       'translateX(-50%)',
+        zIndex:          '1200',
+        maxWidth:        '700px',
+        width:           'max-content',
+        padding:         '14px 36px 16px',
+        background:      'rgba(0, 5, 8, 0.92)',
+        border:          '1px solid rgba(80,255,204,0.55)',
+        boxShadow:       '0 0 0 1px rgba(0,0,0,0.8), 0 4px 40px rgba(0,0,0,0.9), 0 0 24px rgba(80,255,204,0.08)',
+        color:           '#f0e8d5',
+        fontFamily:      '"Crimson Pro", "IM Fell English", Georgia, serif',
+        fontSize:        '20px',
+        fontWeight:      '300',
+        fontStyle:       'italic',
+        lineHeight:      '1.65',
+        letterSpacing:   '0.04em',
+        textAlign:       'center',
+        textShadow:      '0 2px 12px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,1)',
+        backdropFilter:  'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        opacity:         '0',
+        transition:      'opacity 0.5s ease',
+        pointerEvents:   'none',
+        borderRadius:    '3px',
+      });
 
       if (narratorEl) {
         narratorEl.addEventListener('narration-state-enter', (evt) => {
@@ -499,18 +508,18 @@
           if (!state.text) return;
 
           el.innerHTML = state.speakerLabel
-            ? `<span style="color:rgba(80,255,204,0.85);font-family:'Inconsolata',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;display:block;margin-bottom:5px">${state.speakerLabel}</span>${state.text}`
-            : state.text;
+            ? `<span style="color:#50ffcc;font-family:'Inconsolata',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;display:block;margin-bottom:7px;text-shadow:0 0 10px rgba(80,255,204,0.6)">${state.speakerLabel}</span><span style="color:#f5eedf;font-style:italic">${state.text}</span>`
+            : `<span style="color:#f5eedf;font-style:italic">${state.text}</span>`;
           el.style.opacity = '1';
 
           if (vrEl) {
             const displayMsg = state.speakerLabel
-              ? `${state.speakerLabel}: ${state.text}`
+              ? `${state.speakerLabel}\n${state.text}`
               : state.text;
             vrEl.setAttribute('text', 'value', displayMsg);
             vrEl.setAttribute('visible', 'true');
             vrEl.setAttribute('animation',
-              'property: components.text.material.uniforms.opacity.value; from: 0; to: 1; dur: 400; easing: linear');
+              'property: material.opacity; from: 0; to: 0.88; dur: 500; easing: easeOutSine');
           }
         });
 
@@ -518,8 +527,8 @@
           el.style.opacity = '0';
           if (vrEl) {
             vrEl.setAttribute('animation',
-              'property: components.text.material.uniforms.opacity.value; from: 1; to: 0; dur: 400; easing: linear');
-            setTimeout(() => vrEl.setAttribute('visible', 'false'), 400);
+              'property: material.opacity; from: 0.88; to: 0; dur: 500; easing: easeInSine');
+            setTimeout(() => vrEl.setAttribute('visible', 'false'), 520);
           }
         });
 
@@ -578,138 +587,138 @@
        The focus anchor entities in index.html must match these positions.
     ════════════════════════════════════════════════════════════════ */
     const TOUR_STOPS = [
-      {
-        // START near the narrator's spawn point (position="2 1.25 -5")
-        // First move: glide to the south-west Shops corner
-        id:                 'stop-1',
-        title:              'Shops — Village Market',
-        target:             '#focus-shops',
-        audio:              '#audio-stop-1',
-        subtitle:           'Every village begins with its market. Here spices, cloth and gossip moved freely — across faiths, across streets.',
-        speakerLabel:       'Memory',
-        highlightColor:     '#ddccff',
-        highlightIntensity: 1.3,
-        pauseAfterArrival:  800,
-        focusPoint:         { x: -0.80, y: 1.55, z: -3.35 },  // matches #hotspot-shops
-      },
-      {
-        // Long diagonal: SW → NW (Margalla Hills viewpoint)
-        id:                 'stop-2',
-        title:              'Margalla Hills — The Viewpoint',
-        target:             '#focus-margalla',
-        audio:              '#audio-stop-2',
-        subtitle:           'From this hill you could see all of Saidpur. The orchards, the springs — the Margalla Hills have witnessed everything.',
-        speakerLabel:       'Memory',
-        highlightColor:     '#b8ffb0',
-        highlightIntensity: 1.4,
-        pauseAfterArrival:  800,
-        focusPoint:         { x: -0.90, y: 1.55, z: -4.80 },  // matches #hotspot-margalla
-      },
-      {
-        // NW → central-west Handicraft area
-        id:                 'stop-3',
-        title:              'Handicraft Area',
-        target:             '#focus-handicraft',
-        audio:              '#audio-stop-3',
-        subtitle:           'The craftsmen of Saidpur were known across the region. Their work outlasted the families who commissioned it.',
-        speakerLabel:       'Local Man 1',
-        highlightColor:     '#ffddaa',
-        highlightIntensity: 1.2,
-        pauseAfterArrival:  800,
-        focusPoint:         { x: -0.95, y: 1.55, z: -4.55 },  // matches #hotspot-handicraft
-      },
-      {
-        // West → central Mosque
-        id:                 'stop-4',
-        title:              'The Mosque',
-        target:             '#focus-mosque-hs',
-        audio:              '#audio-stop-4',
-        subtitle:           'It was a beautiful mix of people. After the Hindus left, others moved into their houses. The village changed, but the walls remember.',
-        speakerLabel:       'Local Man 1',
-        highlightColor:     '#ffe0a0',
-        highlightIntensity: 1.5,
-        pauseAfterArrival:  800,
-        focusPoint:         { x: -0.55, y: 1.55, z: -4.10 },  // matches #hotspot-mosque
-      },
-      {
-        // Centre → Temple (short, contextual)
-        id:                 'stop-5',
-        title:              'The Temple Courtyard',
-        target:             '#focus-temple',
-        audio:              '#audio-stop-5',
-        subtitle:           'The stairs of the temple have slabs with the names of Sikhs and Hindus who donated them. They all lived here together.',
-        speakerLabel:       'Local Man 2',
-        highlightColor:     '#9ee8ff',
-        highlightIntensity: 1.6,
-        pauseAfterArrival:  800,
-        focusPoint:         { x:  0.12, y: 1.55, z: -4.05 },  // matches #hotspot-temple
-      },
-      {
-        // Long diagonal: centre → far NE Village Edge
-        id:                 'stop-6',
-        title:              'Village Edge — The Perimeter',
-        target:             '#focus-villageedge',
-        audio:              '#audio-stop-6',
-        subtitle:           'At the edge of the village the fields begin. In 1947 many families walked out through here, believing they would return within weeks.',
-        speakerLabel:       'Local Man 1',
-        highlightColor:     '#ffc8e8',
-        highlightIntensity: 1.3,
-        pauseAfterArrival:  900,
-        focusPoint:         { x:  1.05, y: 1.55, z: -4.90 },  // matches #hotspot-villageedge
-      },
-      {
-        // NE → east Neighbourhood
-        id:                 'stop-7',
-        title:              'The Neighbourhood',
-        target:             '#focus-neighbourhood',
-        audio:              '#audio-stop-7',
-        subtitle:           'Muslim, Hindu, Sikh families lived side by side in these lanes. They did not call themselves by religion — they called each other by name.',
-        speakerLabel:       'Memory',
-        highlightColor:     '#aaddff',
-        highlightIntensity: 1.4,
-        pauseAfterArrival:  800,
-        focusPoint:         { x:  1.00, y: 1.55, z: -4.10 },  // matches #hotspot-neighbourhood
-      },
-      {
-        // East → Banyan Tree (north-east quadrant)
-        id:                 'stop-8',
-        title:              'The Banyan Tree',
-        target:             '#focus-banyan',
-        audio:              '#audio-stop-8',
-        subtitle:           'Do you see that big banyan tree? There used to be a water-powered flour mill under it. Everyone from the village would go there.',
-        speakerLabel:       'Local Man 2',
-        highlightColor:     '#88dd66',
-        highlightIntensity: 1.4,
-        pauseAfterArrival:  800,
-        focusPoint:         { x:  0.75, y: 1.55, z: -4.70 },  // matches #hotspot-banyan
-      },
-      {
-        // Long diagonal: NE → SE Old Streets
-        id:                 'stop-9',
-        title:              'Old Residential Streets',
-        target:             '#focus-oldstreets',
-        audio:              '#audio-stop-9',
-        subtitle:           'These walls still hold the handprints of the families who plastered them. Different hands now, but the same clay.',
-        speakerLabel:       'Local Man 1',
-        highlightColor:     '#ffeecc',
-        highlightIntensity: 1.2,
-        pauseAfterArrival:  800,
-        focusPoint:         { x:  0.60, y: 1.55, z: -3.20 },  // matches #hotspot-oldstreets
-      },
-      {
-        // SE → far south Field — final stop, maximum south extent
-        id:                 'stop-10',
-        title:              'The Fields — End of Tour',
-        target:             '#focus-field',
-        audio:              '#audio-stop-10',
-        subtitle:           'Memory is not the past. It is the present, still waiting to be acknowledged. Thank you for walking through Saidpur with us.',
-        speakerLabel:       'Memory',
-        highlightColor:     '#ccff88',
-        highlightIntensity: 1.8,
-        pauseAfterArrival:  1200,
-        focusPoint:         { x:  0.10, y: 1.55, z: -3.00 },  // matches #hotspot-field
-      },
-    ];
+  {
+    // START near the narrator's spawn point (position="2 1.25 -5")
+    // First move: glide to the south-west Shops corner
+    id:                 'stop-1',
+    title:              'Shops — Village Market',
+    target:             '#focus-shops',
+    audio:              '#audio-stop-1',
+    subtitle:           'Welcome to Saidpur. Before the borders were drawn in 1947, this market was the beating heart of a shared world. Here, Hindu, Sikh, and Muslim voices mingled over spices and cloth, entirely unaware of the lines that would soon divide them.',
+    speakerLabel:       'Memory',
+    highlightColor:     '#ddccff',
+    highlightIntensity: 1.3,
+    pauseAfterArrival:  800,
+    focusPoint:         { x: -0.80, y: 1.55, z: -3.35 },
+  },
+  {
+    // Long diagonal: SW → NW (Margalla Hills viewpoint)
+    id:                 'stop-2',
+    title:              'Margalla Hills — The Viewpoint',
+    target:             '#focus-margalla',
+    audio:              '#audio-stop-2',
+    subtitle:           'From this hill, you could see all of Saidpur. Before the city of Islamabad took over, these valleys were filled with wheat fields and gardens of mangoes, apricots, and plums. The Margalla Hills watched it all grow, and watched it all change.',
+    speakerLabel:       'Memory',
+    highlightColor:     '#b8ffb0',
+    highlightIntensity: 1.4,
+    pauseAfterArrival:  800,
+    focusPoint:         { x: -0.90, y: 1.55, z: -4.80 },
+  },
+  {
+    // NW → central-west Handicraft area
+    id:                 'stop-3',
+    title:              'Handicraft Area',
+    target:             '#focus-handicraft',
+    audio:              '#audio-stop-3',
+    subtitle:           'This was where the village potter worked, shaping clay from the local soil. The pots and crafts made by these hands long outlasted the families who originally bought them.',
+    speakerLabel:       'Local Man 1',
+    highlightColor:     '#ffddaa',
+    highlightIntensity: 1.2,
+    pauseAfterArrival:  800,
+    focusPoint:         { x: -0.95, y: 1.55, z: -4.55 },
+  },
+  {
+    // West → central Mosque
+    id:                 'stop-4',
+    title:              'The Mosque',
+    target:             '#focus-mosque-hs',
+    audio:              '#audio-stop-4',
+    subtitle:           'This mosque is deeply historic; though it has been expanded over the years, it once sat right beside a large Hindu settlement. It was a small, close-knit village until the situation worsened during Partition, and so many were forced to leave.',
+    speakerLabel:       'Local Man 1',
+    highlightColor:     '#ffe0a0',
+    highlightIntensity: 1.5,
+    pauseAfterArrival:  800,
+    focusPoint:         { x: -0.55, y: 1.55, z: -4.10 },
+  },
+  {
+    // Centre → Temple (short, contextual)
+    id:                 'stop-5',
+    title:              'The Temple Courtyard',
+    target:             '#focus-temple',
+    audio:              '#audio-stop-5',
+    subtitle:           'The stairs of the temple still hold slabs with the names of the Sikhs and Hindus who donated them. Life carried on in unexpected ways after they left—at one point, this very temple was even used as a school for the children who remained.',
+    speakerLabel:       'Local Man 2',
+    highlightColor:     '#9ee8ff',
+    highlightIntensity: 1.6,
+    pauseAfterArrival:  800,
+    focusPoint:         { x:  0.12, y: 1.55, z: -4.05 },
+  },
+  {
+    // Long diagonal: centre → far NE Village Edge
+    id:                 'stop-6',
+    title:              'Village Edge — The Perimeter',
+    target:             '#focus-villageedge',
+    audio:              '#audio-stop-6',
+    subtitle:           'At the edge of the village the fields begin. In 1947 many families walked out through here, believing they would return within weeks.',
+    speakerLabel:       'Local Man 1',
+    highlightColor:     '#ffc8e8',
+    highlightIntensity: 1.3,
+    pauseAfterArrival:  900,
+    focusPoint:         { x:  1.05, y: 1.55, z: -4.90 },
+  },
+  {
+    // NE → east Neighbourhood
+    id:                 'stop-7',
+    title:              'The Neighbourhood',
+    target:             '#focus-neighbourhood',
+    audio:              '#audio-stop-7',
+    subtitle:           'Muslim, Hindu, Sikh families lived side by side in these lanes. They did not call themselves by religion — they called each other by name.',
+    speakerLabel:       'Memory',
+    highlightColor:     '#aaddff',
+    highlightIntensity: 1.4,
+    pauseAfterArrival:  800,
+    focusPoint:         { x:  1.00, y: 1.55, z: -4.10 },
+  },
+  {
+    // East → Peepal Tree (north-east quadrant)
+    id:                 'stop-8',
+    title:              'The Peepal Tree',
+    target:             '#focus-banyan', // Kept original ID to prevent breaking HTML
+    audio:              '#audio-stop-8',
+    subtitle:           'Do you see that grand Peepal tree? Daily life gathered beneath its branches. At one time, there was even a small school held right under its shade, not far from the ponds where the whole village drew their water.',
+    speakerLabel:       'Local Man 2',
+    highlightColor:     '#88dd66',
+    highlightIntensity: 1.4,
+    pauseAfterArrival:  800,
+    focusPoint:         { x:  0.75, y: 1.55, z: -4.70 },
+  },
+  {
+    // Long diagonal: NE → SE Old Streets
+    id:                 'stop-9',
+    title:              'Old Residential Streets',
+    target:             '#focus-oldstreets',
+    audio:              '#audio-stop-9',
+    subtitle:           'These walls still hold the handprints of the families who plastered them. Different hands now, but the same clay.',
+    speakerLabel:       'Local Man 1',
+    highlightColor:     '#ffeecc',
+    highlightIntensity: 1.2,
+    pauseAfterArrival:  800,
+    focusPoint:         { x:  0.60, y: 1.55, z: -3.20 },
+  },
+  {
+    // SE → far south Field — final stop, maximum south extent
+    id:                 'stop-10',
+    title:              'The Fields — End of Tour',
+    target:             '#focus-field',
+    audio:              '#audio-stop-10',
+    subtitle:           'The harvests here continue, but the hands tending them have changed. Saidpur’s true history lives not just in the walls you’ve seen, but in the quiet spaces left behind. Thank you for bearing witness to their memory.',
+    speakerLabel:       'Memory',
+    highlightColor:     '#ccff88',
+    highlightIntensity: 1.8,
+    pauseAfterArrival:  1200,
+    focusPoint:         { x:  0.10, y: 1.55, z: -3.00 },
+  },
+];
 
 
     /* ════════════════════════════════════════════════════════════════
@@ -850,30 +859,44 @@
         _audioEndCb = () => _onAudioEnd();
         _audioEl.addEventListener('ended', _audioEndCb, { once: true });
 
-        /* Hard fallback — set immediately, before waiting for metadata.
-           If audio has a known duration, we refine the timeout once metadata
-           loads. If metadata never loads (missing file / CORS), the hard
-           fallback of 8 s still fires and the tour continues.           */
-        _fallbackTimer = setTimeout(() => {
-          if (_state === STATES.PLAYING_AUDIO) {
-            console.warn(`[TourEngine] Hard fallback fired for stop ${_stopIndex} — no audio or ended never received.`);
-            _onAudioEnd();
-          }
-        }, 8000);
+        /* Fallback timer — only fires if 'ended' never arrives (e.g. missing
+           file or CORS error). We always derive the duration from the audio
+           element itself so we never cut a clip short.
+           Priority:
+             1. Duration already known (preloaded) → use it immediately.
+             2. loadedmetadata fires            → refine with real duration.
+             3. Neither arrives within 90 s     → emergency skip.          */
+        function _setFallbackFromDuration (durationSec) {
+          if (_fallbackTimer) { clearTimeout(_fallbackTimer); _fallbackTimer = null; }
+          _fallbackTimer = setTimeout(() => {
+            if (_state === STATES.PLAYING_AUDIO) {
+              console.warn(`[TourEngine] Duration fallback fired for stop ${_stopIndex}.`);
+              _onAudioEnd();
+            }
+          }, durationSec * 1000 + 2000);  // 2 s grace after the clip ends
+        }
 
-        /* Refine the fallback once we know the real duration */
-        _audioEl.addEventListener('loadedmetadata', () => {
-          if (_state !== STATES.PLAYING_AUDIO) return;
-          if (_audioEl.duration && isFinite(_audioEl.duration)) {
-            if (_fallbackTimer) { clearTimeout(_fallbackTimer); _fallbackTimer = null; }
-            _fallbackTimer = setTimeout(() => {
-              if (_state === STATES.PLAYING_AUDIO) {
-                console.warn(`[TourEngine] Duration fallback fired for stop ${_stopIndex}.`);
-                _onAudioEnd();
-              }
-            }, _audioEl.duration * 1000 + 1500);
-          }
-        }, { once: true });
+        if (_audioEl.duration && isFinite(_audioEl.duration)) {
+          // Metadata already available (preloaded asset)
+          console.log(`[TourEngine] Duration known immediately: ${_audioEl.duration.toFixed(1)} s`);
+          _setFallbackFromDuration(_audioEl.duration);
+        } else {
+          // Set a safe emergency fallback; refine once metadata arrives
+          _fallbackTimer = setTimeout(() => {
+            if (_state === STATES.PLAYING_AUDIO) {
+              console.warn(`[TourEngine] Emergency fallback fired for stop ${_stopIndex} — metadata never loaded.`);
+              _onAudioEnd();
+            }
+          }, 90000);
+
+          _audioEl.addEventListener('loadedmetadata', () => {
+            if (_state !== STATES.PLAYING_AUDIO) return;
+            if (_audioEl.duration && isFinite(_audioEl.duration)) {
+              console.log(`[TourEngine] Duration from metadata: ${_audioEl.duration.toFixed(1)} s`);
+              _setFallbackFromDuration(_audioEl.duration);
+            }
+          }, { once: true });
+        }
       }
 
       /* ── Phase 4: advance to next stop ──────────────────────────── */
