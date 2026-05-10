@@ -72,9 +72,10 @@
      NarrationAudioManager.isPlaying()
 ══════════════════════════════════════════════════════════════════════════════ */
 window.NarrationAudioManager = (function () {
-  let _current    = null;   // currently playing HTMLAudioElement
-  let _fadeTimer  = null;   // rAF handle for active fade
-  let _playing    = false;
+  let _current     = null;   // currently playing HTMLAudioElement
+  let _fadeTimer   = null;   // rAF handle for active fade
+  let _playing     = false;
+  let _pendingPlay = null;   // { audioEl, volume, fadeDuration } — queued if play() was blocked
 
   function _clearFade () {
     if (_fadeTimer) { cancelAnimationFrame(_fadeTimer); _fadeTimer = null; }
@@ -109,53 +110,88 @@ window.NarrationAudioManager = (function () {
     requestAnimationFrame(step);
   }
 
+  /**
+   * Called when a user gesture fires after a blocked play().
+   * Retries the pending audio immediately.
+   */
+  function _retryOnUserGesture () {
+    if (!_pendingPlay) return;
+    const { audioEl, volume, fadeDuration } = _pendingPlay;
+    _pendingPlay = null;
+    console.log('[NarrationAudioManager] Retrying blocked audio after user gesture.');
+    _playImmediately(audioEl, volume, fadeDuration);
+  }
+
+  /**
+   * Internal: attempt to play audioEl right now, queue for retry if blocked.
+   */
+  function _playImmediately (audioEl, vol, fadeDuration) {
+    if (!audioEl) return;
+    _clearFade();
+
+    if (_current && _current !== audioEl && !_current.paused) {
+      const prev = _current;
+      _fadeOut(prev, fadeDuration, () => { prev.currentTime = 0; });
+    }
+
+    _current             = audioEl;
+    _current.volume      = 0;
+    _current.currentTime = 0;
+    _current.loop        = false;
+
+    const p = _current.play();
+    if (p) {
+      p.catch((err) => {
+        console.warn('[NarrationAudioManager] play() blocked:', err.message);
+        // Queue for retry on the next user gesture (works for VR laser-pointer clicks too)
+        if (!_pendingPlay) {
+          _pendingPlay = { audioEl, volume: vol, fadeDuration };
+          document.addEventListener('click',      _retryOnUserGesture, { once: true });
+          document.addEventListener('touchstart', _retryOnUserGesture, { once: true });
+          // Also listen to A-Frame scene clicks so VR controller selections count
+          const scene = document.querySelector('a-scene');
+          if (scene) scene.addEventListener('click', _retryOnUserGesture, { once: true });
+        }
+      });
+    }
+
+    _playing = true;
+    _fadeIn(_current, vol, fadeDuration);
+  }
+
   return {
     /**
      * Play a new clip.
-     * If another clip is playing, it is cross-faded out first.
+     * If another clip is playing it is cross-faded out first.
+     * If the browser blocks autoplay, the clip is queued and retried
+     * automatically on the next user gesture (click / touch / VR select).
      * @param {HTMLAudioElement} audioEl
-     * @param {number}  vol          — target volume 0–1
-     * @param {number}  fadeDuration — ms for fade-in (default 400)
+     * @param {number}  vol          — target volume 0–1   (default 0.9)
+     * @param {number}  fadeDuration — ms for fade-in       (default 400)
      */
     play (audioEl, vol = 0.9, fadeDuration = 400) {
       if (!audioEl) return;
-      _clearFade();
 
-      /* ── Resume AudioContext first (critical for VR / WebXR) ── */
+      /* ── Resume AudioContext first (required for WebXR) ── */
       const ctx = (typeof THREE !== 'undefined' && THREE.AudioContext && THREE.AudioContext.getContext)
         ? THREE.AudioContext.getContext() : null;
-      const _doPlay = () => {
-        if (_current && _current !== audioEl && !_current.paused) {
-          const prev = _current;
-          _fadeOut(prev, fadeDuration, () => { prev.currentTime = 0; });
-        }
-
-        _current             = audioEl;
-        _current.volume      = 0;
-        _current.currentTime = 0;
-        _current.loop        = false;
-
-        const p = _current.play();
-        if (p) p.catch((err) => {
-          console.warn('[NarrationAudioManager] play() blocked:', err.message);
-        });
-
-        _playing = true;
-        _fadeIn(_current, vol, fadeDuration);
-      };
 
       if (ctx && ctx.state === 'suspended') {
-        ctx.resume().then(_doPlay).catch(_doPlay);
+        ctx.resume()
+          .then(() => _playImmediately(audioEl, vol, fadeDuration))
+          .catch(()  => _playImmediately(audioEl, vol, fadeDuration));
       } else {
-        _doPlay();
+        _playImmediately(audioEl, vol, fadeDuration);
       }
     },
 
     /**
      * Stop the current clip with a fade-out.
+     * Also cancels any pending (blocked) play.
      * @param {number} fadeDuration — ms (default 600)
      */
     stop (fadeDuration = 600) {
+      _pendingPlay = null;
       _clearFade();
       if (_current && !_current.paused) {
         _fadeOut(_current, fadeDuration, () => {
@@ -169,6 +205,7 @@ window.NarrationAudioManager = (function () {
 
     /** Pause immediately (preserves position for resume). */
     pause () {
+      _pendingPlay = null;
       _clearFade();
       if (_current && !_current.paused) _current.pause();
       _playing = false;

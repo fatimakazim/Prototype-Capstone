@@ -135,15 +135,9 @@
 
         if (introCard) setTimeout(() => introCard.classList.add('visible'), 200);
         window._introComplete = true;
-        // Auto-start the tour after a short settle delay.
-        // The Skip Tour UI (injected by the inline script at the bottom of index.html)
-        // will appear simultaneously — clicking "Skip Tour" calls NarrationController.pause()
-        // to stop it, or the user can let it run.
-        setTimeout(() => {
-          if (window.NarrationController && !window._tourSkipped) {
-            window.NarrationController.startTour();
-          }
-        }, 1800);
+        // Auto-start removed — user must click "Start Tour" button.
+        // This ensures a valid user gesture exists before audio plays,
+        // which is required by browsers inside WebXR/VR sessions.
 
         fadePlane.removeAttribute('animation__ifo');
         fadePlane.setAttribute('animation__ifi',
