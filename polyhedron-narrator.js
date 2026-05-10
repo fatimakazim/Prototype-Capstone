@@ -109,24 +109,6 @@ window.NarrationAudioManager = (function () {
     requestAnimationFrame(step);
   }
 
-  /* ── AudioContext unlock helper ─────────────────────────────────────────
-     VR headsets (Quest, Pico, etc.) suspend the AudioContext after page load
-     and only resume it after an explicit user gesture. We attempt to resume
-     it here, immediately before any .play() call, so narrator audio works
-     without requiring an extra tap.
-  ───────────────────────────────────────────────────────────────────────── */
-  function _unlockAudioContext () {
-    try {
-      // A-Frame / Three.js exposes the shared AudioContext via THREE.AudioContext
-      const ctx = (typeof THREE !== 'undefined' && THREE.AudioContext)
-        ? THREE.AudioContext.getContext()
-        : null;
-      if (ctx && ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-      }
-    } catch (e) { /* non-fatal — best effort only */ }
-  }
-
   return {
     /**
      * Play a new clip.
@@ -138,9 +120,6 @@ window.NarrationAudioManager = (function () {
     play (audioEl, vol = 0.9, fadeDuration = 400) {
       if (!audioEl) return;
       _clearFade();
-
-      // Unlock AudioContext first — essential for VR headsets
-      _unlockAudioContext();
 
       if (_current && _current !== audioEl && !_current.paused) {
         const prev = _current;
