@@ -413,7 +413,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
     <video id="holo-vid"
            src="https://raw.githubusercontent.com/fatimakazim/Prototype-Capstone/main/Assets/video/testimony-hologram.mp4"
-           preload="auto" playsinline
+           preload="auto" playsinline muted
            crossorigin="anonymous"
            webkit-playsinline="true"></video>
 
@@ -435,9 +435,9 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 <audio id="audio-stop-8"  src="assets/audio/stop-08.mp3"  preload="auto" crossorigin="anonymous"></audio>
 <audio id="audio-stop-9"  src="assets/audio/stop-09.mp3"  preload="auto" crossorigin="anonymous"></audio>
 <audio id="audio-stop-10" src="assets/audio/stop-10.mp3"  preload="auto" crossorigin="anonymous"></audio>
-    <video id="street-360-vid" src="https://sukzessiv.net/~gohai/fatima/export_video%202.MP4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
-   <video id="temple-360-vid" src="assets/video/temple.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
-    <video id="house-360"  src="assets/video/20260422_163826_317.mp4" preload="auto" loop playsinline crossorigin="anonymous" webkit-playsinline="true"></video>
+    <video id="street-360-vid" src="https://sukzessiv.net/~gohai/fatima/export_video%202.MP4" preload="auto" loop playsinline muted crossorigin="anonymous" webkit-playsinline="true"></video>
+   <video id="temple-360-vid" src="assets/video/temple.mp4" preload="auto" loop playsinline muted crossorigin="anonymous" webkit-playsinline="true"></video>
+    <video id="house-360"  src="assets/video/20260422_163826_317.mp4" preload="auto" loop playsinline muted crossorigin="anonymous" webkit-playsinline="true"></video>
     <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
     <audio id="audio-temple"  src="assets/audio/narration-temple.mp3"  preload="none" crossorigin="anonymous"></audio>
     <audio id="ambient-model" src="assets/audio/ambient-museum.mp3"    preload="none" crossorigin="anonymous"></audio>
@@ -1096,13 +1096,209 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 <script src="main.js"></script>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════════════
+   VR AUDIO FIX — WebXR requires AudioContext.resume() inside enter-vr.
+   Without this, ALL Web Audio (narration + video) is silent in a headset.
+═══════════════════════════════════════════════════════════════════════ */
+(function vrAudioUnlock () {
+  'use strict';
+
+  function _resumeCtx () {
+    const ctx = (typeof THREE !== 'undefined' && THREE.AudioContext && THREE.AudioContext.getContext)
+      ? THREE.AudioContext.getContext()
+      : null;
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(() => console.log('[VR-audio] AudioContext resumed.'));
+    }
+  }
+
+  const ALL_360_VIDS = [
+    '#street-360-vid', '#temple-360-vid', '#house-360',
+    '#margalla-360', '#banyan-360', '#mosque-360',
+    '#restaurant-360', '#shops-360', '#neighbourhood-360', '#field-360',
+    '#handicraft-360', '#villageedge-360', '#oldstreets-360',
+  ];
+
+  /* Unmute whichever 360 video is currently playing */
+  function _unmuteCurrent360 () {
+    ALL_360_VIDS.forEach(id => {
+      const v = document.querySelector(id);
+      if (v && !v.paused) {
+        v.muted = false;
+        v.volume = 1.0;
+      }
+    });
+  }
+
+  /* Resume narration if AudioContext blocked it */
+  function _unlockNarrationAudio () {
+    const mgr = window.NarrationAudioManager;
+    if (mgr && typeof mgr.currentAudio === 'function') {
+      const cur = mgr.currentAudio();
+      if (cur && cur.paused) cur.play().catch(() => {});
+    }
+  }
+
+  const scene = document.querySelector('a-scene');
+  if (scene) {
+    scene.addEventListener('enter-vr', () => {
+      _resumeCtx();
+      setTimeout(_unmuteCurrent360, 200);
+      setTimeout(_unlockNarrationAudio, 200);
+      console.log('[VR-audio] enter-vr: audio unlock triggered.');
+    });
+  }
+
+  /* Also unlock on first gesture in 2D / desktop mode */
+  const _gestureUnlock = () => { _resumeCtx(); _unlockNarrationAudio(); };
+  document.addEventListener('click',      _gestureUnlock, { once: true });
+  document.addEventListener('touchstart', _gestureUnlock, { once: true, passive: true });
+  document.addEventListener('keydown',    _gestureUnlock, { once: true });
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SKIP-TOUR UI — welcome prompt with Start / Skip buttons.
+   Appears after the intro hologram transitions out.
+═══════════════════════════════════════════════════════════════════════ */
+(function skipTourUI () {
+  'use strict';
+
+  /* Inject CSS */
+  const style = document.createElement('style');
+  style.textContent = `
+    #skip-tour-overlay {
+      position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%);
+      z-index: 1300; display: flex; flex-direction: column; align-items: center; gap: 12px;
+      pointer-events: auto;
+    }
+    #skip-tour-overlay.hidden { display: none !important; }
+    .skt-prompt {
+      color: #c8f5ea; font-family: "Crimson Pro", Georgia, serif;
+      font-size: 18px; font-style: italic; text-align: center;
+      text-shadow: 0 2px 14px rgba(0,0,0,1); margin-bottom: 2px;
+    }
+    .skt-row { display: flex; gap: 14px; }
+    .skt-btn {
+      padding: 10px 26px; font-family: "Inconsolata", monospace;
+      font-size: 11px; letter-spacing: .18em; text-transform: uppercase; cursor: pointer;
+      background: rgba(0,18,22,.88); border: 1px solid rgba(80,255,204,.6);
+      color: #50ffcc; border-radius: 2px; box-shadow: 0 0 14px rgba(80,255,204,.18);
+      transition: background .2s, box-shadow .2s;
+    }
+    .skt-btn:hover { background: rgba(80,255,204,.12); box-shadow: 0 0 22px rgba(80,255,204,.35); }
+    .skt-btn.secondary { border-color: rgba(180,180,180,.4); color: rgba(200,200,200,.7); }
+  `;
+  document.head.appendChild(style);
+
+  /* Poll for intro completion */
+  function _poll () {
+    if (!window._introComplete || !window.NarrationController) {
+      setTimeout(_poll, 250); return;
+    }
+    _inject();
+  }
+  setTimeout(_poll, 250);
+
+  function _inject () {
+    if (document.getElementById('skip-tour-overlay')) return;
+
+    /* 2D overlay */
+    const ov = document.createElement('div');
+    ov.id = 'skip-tour-overlay';
+    ov.innerHTML = `
+      <div class="skt-prompt">
+        Hi, I'm your virtual narrator guiding you through the tour.<br>Should we begin?
+      </div>
+      <div class="skt-row">
+        <button class="skt-btn"           id="btn-start-tour">Start Tour</button>
+        <button class="skt-btn secondary" id="btn-skip-tour">Skip Tour</button>
+      </div>`;
+    document.body.appendChild(ov);
+
+    document.getElementById('btn-start-tour').addEventListener('click', _startTour);
+    document.getElementById('btn-skip-tour').addEventListener('click',  _skipTour);
+
+    /* VR A-Frame panel */
+    _injectVRPanel();
+  }
+
+  function _dismiss () {
+    const ov = document.getElementById('skip-tour-overlay');
+    if (ov) ov.classList.add('hidden');
+    const vrp = document.querySelector('#vr-skip-tour-panel');
+    if (vrp) vrp.setAttribute('visible', 'false');
+  }
+
+  function _startTour () {
+    _dismiss();
+    if (window.NarrationController) window.NarrationController.startTour();
+  }
+
+  function _skipTour () {
+    _dismiss();
+    window._tourSkipped = true;
+    console.log('[SkipTour] Free-exploration mode.');
+    const hud = document.querySelector('#ghost-hud');
+    if (hud) hud.classList.remove('visible');
+    /* Ensure narration controller stays in IDLE so it won't auto-start */
+  }
+
+  function _injectVRPanel () {
+    const scene = document.querySelector('a-scene');
+    if (!scene) return;
+
+    const wrap = document.createElement('a-entity');
+    wrap.id = 'vr-skip-tour-panel';
+    wrap.setAttribute('position', '0 1.52 -1.9');
+
+    const bg = document.createElement('a-plane');
+    bg.setAttribute('width', '1.15'); bg.setAttribute('height', '0.40');
+    bg.setAttribute('material', 'color:#001418;opacity:0.90;transparent:true');
+    wrap.appendChild(bg);
+
+    const txt = document.createElement('a-text');
+    txt.setAttribute('value', "Hi, I'm your virtual narrator.\nShould we begin the tour?");
+    txt.setAttribute('align', 'center'); txt.setAttribute('color', '#c8f5ea');
+    txt.setAttribute('width', '1.05'); txt.setAttribute('position', '0 0.08 0.01');
+    wrap.appendChild(txt);
+
+    wrap.appendChild(_vrBtn('Start Tour', '#50ffcc', -0.23, -0.11, _startTour));
+    wrap.appendChild(_vrBtn('Skip Tour',  '#888888',  0.23, -0.11, _skipTour));
+
+    scene.appendChild(wrap);
+  }
+
+  function _vrBtn (label, color, x, y, cb) {
+    const btn = document.createElement('a-entity');
+    btn.setAttribute('position', `${x} ${y} 0.01`);
+    btn.classList.add('clickable');
+
+    const bg = document.createElement('a-plane');
+    bg.setAttribute('width', '0.38'); bg.setAttribute('height', '0.09');
+    bg.setAttribute('material', `color:#001418;emissive:${color};emissiveIntensity:0.14;transparent:true;opacity:0.92`);
+    btn.appendChild(bg);
+
+    const lbl = document.createElement('a-text');
+    lbl.setAttribute('value', label); lbl.setAttribute('align', 'center');
+    lbl.setAttribute('color', color); lbl.setAttribute('width', '0.34');
+    lbl.setAttribute('position', '0 0 0.005');
+    btn.appendChild(lbl);
+
+    btn.addEventListener('click', cb);
+    return btn;
+  }
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PAGE INIT (preserved)
+═══════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('load', () => {
     const loader = document.querySelector('#loading-screen');
-    setTimeout(() => {
-      if (loader) loader.classList.add('hidden');
-    }, 1500);
+    setTimeout(() => { if (loader) loader.classList.add('hidden'); }, 1500);
   });
 
   const enterBtn  = document.querySelector('#enter-btn');
@@ -1115,7 +1311,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('[index] Scene started by user.');
     });
   }
-
 });
 </script>
 

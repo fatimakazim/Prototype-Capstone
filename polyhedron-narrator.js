@@ -121,23 +121,34 @@ window.NarrationAudioManager = (function () {
       if (!audioEl) return;
       _clearFade();
 
-      if (_current && _current !== audioEl && !_current.paused) {
-        const prev = _current;
-        _fadeOut(prev, fadeDuration, () => { prev.currentTime = 0; });
+      /* ── Resume AudioContext first (critical for VR / WebXR) ── */
+      const ctx = (typeof THREE !== 'undefined' && THREE.AudioContext && THREE.AudioContext.getContext)
+        ? THREE.AudioContext.getContext() : null;
+      const _doPlay = () => {
+        if (_current && _current !== audioEl && !_current.paused) {
+          const prev = _current;
+          _fadeOut(prev, fadeDuration, () => { prev.currentTime = 0; });
+        }
+
+        _current             = audioEl;
+        _current.volume      = 0;
+        _current.currentTime = 0;
+        _current.loop        = false;
+
+        const p = _current.play();
+        if (p) p.catch((err) => {
+          console.warn('[NarrationAudioManager] play() blocked:', err.message);
+        });
+
+        _playing = true;
+        _fadeIn(_current, vol, fadeDuration);
+      };
+
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(_doPlay).catch(_doPlay);
+      } else {
+        _doPlay();
       }
-
-      _current             = audioEl;
-      _current.volume      = 0;
-      _current.currentTime = 0;
-      _current.loop        = false;
-
-      const p = _current.play();
-      if (p) p.catch((err) => {
-        console.warn('[NarrationAudioManager] play() blocked:', err.message);
-      });
-
-      _playing = true;
-      _fadeIn(_current, vol, fadeDuration);
     },
 
     /**

@@ -224,16 +224,17 @@
           this._vidEl   = v;
           this._vidTex  = tex;
 
-          /* ── Autoplay with muted fallback (browser policy) ── */
+          /* ── Autoplay: MUST start muted for browser/VR autoplay policy.
+             Audio is re-enabled by the gesture-unlock handler below, or
+             by the enter-vr event in the page-level script. ── */
           if (d.autoplay) {
             v.loop   = true;
-            v.muted  = false;
+            v.muted  = true;   // start muted — unlocked via gesture/enter-vr
             v.volume = d.volume;
             const playAttempt = v.play();
             if (playAttempt !== undefined) {
-              playAttempt.catch(() => {
-                v.muted = true;
-                v.play().catch(() => {});
+              playAttempt.catch((err) => {
+                console.warn('[hologram-video] autoplay blocked:', err.message);
               });
             }
 
@@ -248,12 +249,19 @@
         }
       }
 
-      /* ── Gesture-unlock for audio (required on many browsers) ── */
+      /* ── Gesture-unlock for audio (required on browsers + VR) ──
+         On first click/touch/key: unmute the video so its audio plays.
+         In VR this is triggered by the enter-vr handler in page script. ── */
       const unlockAudio = () => {
-        if (this._vidEl && this._vidEl.paused) {
+        if (this._vidEl) {
           this._vidEl.muted = false;
-          this._vidEl.play().catch(() => {});
+          this._vidEl.volume = d.volume;
+          this._vidEl.play().catch(() => { this._vidEl.muted = true; });
         }
+        /* Also ensure the AudioContext is running */
+        const ctx = THREE.AudioContext && THREE.AudioContext.getContext
+          ? THREE.AudioContext.getContext() : null;
+        if (ctx && ctx.state === 'suspended') ctx.resume();
         document.removeEventListener('click',      unlockAudio);
         document.removeEventListener('touchstart', unlockAudio);
         document.removeEventListener('keydown',    unlockAudio);
@@ -390,9 +398,15 @@
         const a = document.querySelector(d.audioSrc);
         if (a) {
           this._audio = a;
-          a.loop   = true;
+          a.loop   = false;   // narration plays once, not on a loop
           a.volume = d.volume;
-          if (d.autoplay) a.play().catch(() => {});
+          if (d.autoplay) {
+            // Play attempt — will be blocked on first load without gesture.
+            // The gesture-unlock / enter-vr handler will retry.
+            a.play().catch(() => {
+              console.warn('[hologram-video] audio autoplay blocked — waiting for gesture.');
+            });
+          }
         }
       }
 
@@ -531,6 +545,7 @@
   src="assets/video/testimony-hologram.mp4"
   loop
   playsinline
+  muted
   crossorigin="anonymous"
   preload="auto">
 </video>
@@ -555,7 +570,8 @@
       preload="auto">
     </video>
 
-    <audio id="holo-audio" src="assets/audio/scene1.mp3" preload="auto" loop></audio>
+    <!-- Hologram intro narration — played once (not looped) -->
+    <audio id="holo-audio" src="assets/audio/scene1.mp3" preload="auto"></audio>
   </a-assets>
 
   <a-entity id="rig" position="0 0 0">
@@ -584,22 +600,66 @@
 
 </a-scene>
 
-<button type="button" id="holo-enter-museum"
-  style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 28px;font-family:system-ui,sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;background:rgba(0,20,24,.9);color:#50ffcc;border:1px solid #50ffcc;border-radius:2px;box-shadow:0 0 18px rgba(80,255,204,.2);">
-  Enter museum
-</button>
+<!-- ═══════════════════════════════════════════════════════════════
+     VR AUDIO UNLOCK + ENTER MUSEUM BUTTON
+     The WebXR spec requires AudioContext.resume() inside enter-vr.
+     Without this, ALL audio (narration + video) stays silent in VR.
+═══════════════════════════════════════════════════════════════ -->
 <script>
 (function () {
+  /* ── 1. AudioContext resume on every user gesture (desktop + VR) ── */
+  function _resumeAudioContext () {
+    const ctx = THREE.AudioContext && THREE.AudioContext.getContext
+      ? THREE.AudioContext.getContext()
+      : (window.AudioContext || window.webkitAudioContext)
+          ? new (window.AudioContext || window.webkitAudioContext)()
+          : null;
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(() => console.log('[hologram] AudioContext resumed.'));
+    }
+  }
+
+  /* ── 2. Resume on WebXR enter-vr event ── */
+  const scene = document.querySelector('a-scene');
+  if (scene) {
+    scene.addEventListener('enter-vr', () => {
+      _resumeAudioContext();
+      /* Unmute the hologram video inside VR so its audio plays */
+      const vid = document.querySelector('#holo-video');
+      if (vid) {
+        vid.muted = false;
+        vid.play().catch(() => { vid.muted = true; });
+      }
+      /* Play holo narration audio */
+      const aud = document.querySelector('#holo-audio');
+      if (aud && aud.paused) {
+        aud.loop = false;
+        aud.play().catch(() => {});
+      }
+    });
+  }
+
+  /* ── 3. Resume on first click / touch (desktop unlock) ── */
+  const _unlock = () => {
+    _resumeAudioContext();
+    const vid = document.querySelector('#holo-video');
+    if (vid && vid.muted) {
+      vid.muted = false;
+      vid.play().catch(() => { vid.muted = true; });
+    }
+  };
+  document.addEventListener('click',      _unlock, { once: true });
+  document.addEventListener('touchstart', _unlock, { once: true, passive: true });
+  document.addEventListener('keydown',    _unlock, { once: true });
+
+  /* ── 4. Enter Museum button ── */
   const btn = document.getElementById('holo-enter-museum');
   if (!btn) return;
   btn.addEventListener('click', () => {
-
-    // 1. Disable the button so it can't be clicked twice
     btn.disabled = true;
     btn.style.opacity = '0.4';
     btn.style.pointerEvents = 'none';
 
-    // 2. Pause hologram audio/video
     const aud = document.querySelector('#holo-audio');
     const vid = document.querySelector('#holo-video');
     if (aud) { aud.pause(); try { aud.currentTime = 0; } catch (e) {} }
@@ -608,24 +668,19 @@
     const comp = holo && holo.components && holo.components['hologram-video'];
     if (comp && typeof comp.pauseHolo === 'function') comp.pauseHolo();
 
-    // 3. Fade to black, then navigate to the museum
     const overlay = document.getElementById('fade-overlay');
     if (overlay) {
       overlay.style.display = 'block';
       overlay.style.transition = 'opacity 1.2s ease';
       overlay.style.opacity = '0';
-      // Force reflow so transition fires
       overlay.getBoundingClientRect();
       overlay.style.opacity = '1';
-      setTimeout(() => {
-        window.location.href = 'index.html';
-      }, 1300);
+      setTimeout(() => { window.location.href = 'index.html'; }, 1300);
     } else {
       window.location.href = 'index.html';
     }
   });
 })();
 </script>
-
 </body>
 </html>

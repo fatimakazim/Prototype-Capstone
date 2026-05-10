@@ -119,8 +119,8 @@
       if (holoVid) {
         holoVid.pause();
         holoVid.currentTime = 0;
-        holoVid.loop  = true;
-        holoVid.muted = false;
+        holoVid.muted = true;
+        holoVid.loop  = false;
       }
 
       
@@ -135,11 +135,9 @@
 
         if (introCard) setTimeout(() => introCard.classList.add('visible'), 200);
         window._introComplete = true;
-        setTimeout(() => {
-  if (window.NarrationController) {
-    window.NarrationController.startTour();
-  }
-}, 1800); 
+        // NOTE: Tour start is deferred to the Skip-Tour UI (Start Tour / Skip Tour buttons).
+        // The skipTourUI script in index.html polls _introComplete and NarrationController,
+        // then presents the user with a choice before calling NarrationController.startTour().
 
         fadePlane.removeAttribute('animation__ifo');
         fadePlane.setAttribute('animation__ifi',
@@ -1198,15 +1196,24 @@ const vidId = sceneName === 'street' ? '#street-360-vid'
 
 const activeVid = document.querySelector(vidId);
 if (activeVid && activeVid.tagName === 'VIDEO') {
-  activeVid.muted = true;          // ← REQUIRED for autoplay in VR/browsers
-  activeVid.currentTime = 0;       // ← restart from beginning
-  activeVid.loop = true;           // ← keep looping the 360
+  activeVid.currentTime = 0;       // restart from beginning
+  activeVid.loop = true;           // keep looping the 360
+  // Start muted so autoplay succeeds, then unmute immediately after play promise resolves.
+  // If already inside VR the vrAudioUnlock handler will handle unmuting.
+  activeVid.muted = true;
   const playPromise = activeVid.play();
   if (playPromise !== undefined) {
-    playPromise.catch((err) => {
+    playPromise.then(() => {
+      // Unmute now that playback has started — safe to restore audio
+      activeVid.muted = false;
+      activeVid.volume = 1.0;
+    }).catch((err) => {
       console.warn('[VR] Video autoplay blocked for', vidId, err.message);
-      // Fallback: try again on next user interaction
-      const retry = () => { activeVid.play().catch(() => {}); };
+      // Fallback: try again on next user interaction, unmuting then
+      const retry = () => {
+        activeVid.muted = false;
+        activeVid.play().catch(() => {});
+      };
       document.addEventListener('click',      retry, { once: true });
       document.addEventListener('touchstart', retry, { once: true });
     });
@@ -1269,6 +1276,8 @@ if (activeVid && activeVid.tagName === 'VIDEO') {
     const vid = document.querySelector(id);
     if (vid && vid.pause) {
       vid.pause();
+      vid.muted = true;       // mute so no audio leaks if the element keeps buffering
+      vid.currentTime = 0;    // reset to start for next entry
     }
   });
 }
