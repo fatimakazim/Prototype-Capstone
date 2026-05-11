@@ -205,24 +205,26 @@ window.NarrationAudioManager = (function () {
 
     _pendingPlay = { audioEl, vol, fadeDuration };
     console.log('[NAM] Fetching + decoding:', audioEl.src);
+    console.log(audioEl)
+    audioEl.play()
 
-    fetch(audioEl.src)
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-      .then(ab  => audioCtx.decodeAudioData(ab))
-      .then(buf => {
-        _buffers[id] = buf;
-        console.log('[NAM] Decoded OK:', id);
-        // Fire pending play if it's still for this clip
-        if (_pendingPlay && _pendingPlay.audioEl.id === id) {
-          const { vol: v, fadeDuration: fd } = _pendingPlay;
-          _pendingPlay = null;
-          _playBuffer(id, v, fd);
-        }
-      })
-      .catch(err => {
-        console.error('[NAM] Decode error:', audioEl.src, err);
-        _pendingPlay = null;
-      });
+    // fetch(audioEl.src)
+    //   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+    //   .then(ab  => audioCtx.decodeAudioData(ab))
+    //   .then(buf => {
+    //     _buffers[id] = buf;
+    //     console.log('[NAM] Decoded OK:', id);
+    //     // Fire pending play if it's still for this clip
+    //     if (_pendingPlay && _pendingPlay.audioEl.id === id) {
+    //       const { vol: v, fadeDuration: fd } = _pendingPlay;
+    //       _pendingPlay = null;
+    //       _playBuffer(id, v, fd);
+    //     }
+    //   })
+    //   .catch(err => {
+    //     console.error('[NAM] Decode error:', audioEl.src, err);
+    //     _pendingPlay = null;
+    //   });
   }
 
 

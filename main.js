@@ -582,6 +582,7 @@
      if (narratorEl) {
        narratorEl.addEventListener('narration-state-enter', (evt) => {
          const { state } = evt.detail;
+         console.log("is this printing?", state)
          if (!state.text) return;
 
 
