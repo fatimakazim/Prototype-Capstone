@@ -228,6 +228,30 @@ window.NarrationAudioManager = (function () {
      * button click handler to ensure the AudioContext is unlocked.
      */
     retryPending () { _retryOnUserGesture(); },
+
+    /**
+     * Force-resume the AudioContext (if suspended) then play immediately.
+     * Use this instead of play() when inside a VR button click handler,
+     * so the AudioContext resume and the play() call are sequenced correctly.
+     * @param {HTMLAudioElement} audioEl
+     * @param {number}  vol          — target volume 0–1   (default 0.9)
+     * @param {number}  fadeDuration — ms for fade-in       (default 400)
+     */
+    forcePlay (audioEl, vol = 0.9, fadeDuration = 400) {
+      if (!audioEl) return;
+      const ctx = (typeof THREE !== 'undefined' && THREE.AudioContext && THREE.AudioContext.getContext)
+        ? THREE.AudioContext.getContext() : null;
+
+      const doPlay = () => {
+        _playImmediately(audioEl, vol, fadeDuration);
+      };
+
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(doPlay).catch(doPlay);
+      } else {
+        doPlay();
+      }
+    },
   };
 })();
 

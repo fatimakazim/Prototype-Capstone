@@ -850,7 +850,8 @@
           return;
         }
 
-        NarrationAudioManager.play(_audioEl, 0.9, 300);
+        // Use forcePlay to ensure AudioContext is live before playing
+        NarrationAudioManager.forcePlay(_audioEl, 0.9, 300);
         console.log(`[TourEngine] 🔊 Stop ${_stopIndex}: "${stop.title}" — playing audio.`);
 
         /* Primary listener — fires _onAudioEnd when audio finishes naturally */
