@@ -415,7 +415,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
     <!-- holo-vid: MUST be muted for autoplay policy; audio comes from holo-audio -->
     <video id="holo-vid"
-           src="https://raw.githubusercontent.com/fatimakazim/Prototype-Capstone/main/Assets/video/testimony-hologram.mp4"
+           src="https://raw.githubusercontent.com/fatimakazim/Prototype-Capstone/main/assets/video/testimony-hologram.mp4"
            preload="auto" playsinline muted
            crossorigin="anonymous"
            webkit-playsinline="true"></video>
@@ -1039,7 +1039,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
   <!-- Background panel -->
   <a-plane width="2.2" height="0.52"
-           material="color:#00080c; opacity:0; transparent:true; shader:flat"
+           material="color:#00080c; opacity:0.5; transparent:true; shader:flat"
            animation__show="startEvents:show; property:material.opacity; to:0.88; dur:500; easing:easeOutSine"
            animation__hide="startEvents:hide; property:material.opacity; to:0; dur:500; easing:easeInSine">
   </a-plane>
