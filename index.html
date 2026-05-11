@@ -1337,39 +1337,13 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     scene.appendChild(panel);
 
     // Attach click listeners directly to the geometry elements (raycaster hits these)
-    startBtnGeom.addEventListener('click', async function (e) {
+    startBtnGeom.addEventListener('click', function (e) {
       e.stopPropagation();
-
-      // Force AudioContext resume first — browser suspends it on VR entry
-      var ctx = (typeof THREE !== 'undefined' && THREE.AudioContext && THREE.AudioContext.getContext)
-        ? THREE.AudioContext.getContext() : null;
-      if (ctx && ctx.state === 'suspended') {
-        await ctx.resume();
-        console.log('[VR] AudioContext resumed by Start Tour button');
-      }
-
-      // If there's a pending audio (blocked on first play), retry it now
+      // Force AudioContext resume + retry any queued audio
       if (window.NarrationAudioManager && window.NarrationAudioManager.retryPending) {
         window.NarrationAudioManager.retryPending();
       }
-
-      // Small delay to let AudioContext settle, then start/resume tour
-      setTimeout(function () {
-        var state = window.NarrationController && window.NarrationController.getState();
-        if (state === 'IDLE') {
-          window.NarrationController.startTour();
-        } else if (
-          state === 'PLAYING_AUDIO' &&
-          window.NarrationAudioManager.currentAudio() &&
-          window.NarrationAudioManager.currentAudio().paused
-        ) {
-          // Resume if paused
-          window.NarrationAudioManager.resume(0.9);
-        } else {
-          // Fallback: run the normal start flow
-          _startTour();
-        }
-      }, 100);
+      _startTour();
     });
 
     skipBtnGeom.addEventListener('click', function (e) {
@@ -1429,3 +1403,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
