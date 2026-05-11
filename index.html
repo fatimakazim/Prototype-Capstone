@@ -1152,6 +1152,18 @@ AFRAME.registerComponent('thumbstick-locomotion', {
         retryNarration();
       }, 300);
     });
+
+    // Pro-actively unlock audio on the first VR trigger press.
+    // This ensures any blocked narration is retried as soon as the user
+    // presses a controller trigger, even before the "Start Tour" button.
+    scene.addEventListener('triggerdown', function () {
+      resumeAudioContext();
+      // Tiny delay so the AudioContext is fully resumed before retrying
+      setTimeout(function () {
+        unmuteLiveVideos();
+        retryNarration();
+      }, 100);
+    });
   }
 
   // Also unlock on first desktop gesture (2D mode)
@@ -1403,4 +1415,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
-

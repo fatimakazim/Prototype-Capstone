@@ -161,7 +161,8 @@ window.NarrationAudioManager = (function () {
          document.addEventListener('touchstart', _retryOnUserGesture, { once: true });
          // Also listen to A-Frame scene clicks so VR controller selections count
          const scene = document.querySelector('a-scene');
-         if (scene) scene.addEventListener('click', _retryOnUserGesture, { once: true });
+         if (scene) scene.addEventListener('click',       _retryOnUserGesture, { once: true });
+         if (scene) scene.addEventListener('triggerdown', _retryOnUserGesture, { once: true }); // VR trigger press as user gesture
        }
      });
    }
@@ -1190,4 +1191,3 @@ AFRAME.registerComponent('polyhedron-narrator-indicator', {
    this.el.removeObject3D('indicator');
  },
 });
-
