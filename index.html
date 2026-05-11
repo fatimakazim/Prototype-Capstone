@@ -308,7 +308,7 @@
     <div id="vp-audio-wrap"><div id="vp-prog-bg"><div id="vp-prog-fill"></div></div><div id="vp-time">0:00 / —</div></div>
     <div id="vp-subtitles"><em style="color:rgba(200,175,140,.55);font-size:14px">Press ▶ to begin the story of this village.</em></div>
   </div>
-  <audio id="vp-interview-audio" preload="auto"><source src="assets/audio/village-interview.mp3" type="audio/mpeg"></audio>
+  <!-- <audio id="vp-interview-audio" preload="auto"><source src="assets/audio/village-interview.mp3" type="audio/mpeg"></audio>   -->
 </div>
 
 <!-- THUMBSTICK LOCOMOTION — registered BEFORE <a-scene> -->
@@ -386,7 +386,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
       in main.js. If a file is missing, that beat plays silently and
       advances on its duration timer.
     ──────────────────────────────────────────────────────────────── -->
-    <audio id="audio-narrator-mosque"
+    <!-- <audio id="audio-narrator-mosque"
            src="assets/audio/narration-mosque.mp3"
            preload="none"
            crossorigin="anonymous"></audio>
@@ -409,7 +409,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     <audio id="audio-narrator-trees"
            src="assets/audio/narration-trees.mp3"
            preload="none"
-           crossorigin="anonymous"></audio>
+           crossorigin="anonymous"></audio> -->
 
     <!-- holo-vid: MUST be muted for autoplay policy; audio comes from holo-audio -->
     <video id="holo-vid"
@@ -418,10 +418,10 @@ AFRAME.registerComponent('thumbstick-locomotion', {
            crossorigin="anonymous"
            webkit-playsinline="true"></video>
 
-    <audio id="holo-audio"
+    <!-- <audio id="holo-audio"
            src="assets/audio/ambient-village.mp3"
            preload="auto"
-           crossorigin="anonymous"></audio>
+           crossorigin="anonymous"></audio> -->
 
     <!-- ── Guided Tour Narration Audio (INSIDE a-assets so A-Frame manages them) ── -->
     <audio id="audio-stop-1"  src="assets/audio/stop-01.mp3"  preload="auto" crossorigin="anonymous"></audio>
@@ -450,9 +450,9 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     <video id="villageedge-360"  src="https://example.com/videos/villageedge-360.mp4"                                                                     preload="auto" loop playsinline muted crossorigin="anonymous" webkit-playsinline="true"></video>
     <video id="oldstreets-360"   src="https://example.com/videos/oldstreets-360.mp4"                                                                      preload="auto" loop playsinline muted crossorigin="anonymous" webkit-playsinline="true"></video>
 
-    <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
+    <!-- <audio id="audio-street"  src="assets/audio/narration-street.mp3"  preload="none" crossorigin="anonymous"></audio>
     <audio id="audio-temple"  src="assets/audio/narration-temple.mp3"  preload="none" crossorigin="anonymous"></audio>
-    <audio id="ambient-model" src="assets/audio/ambient-museum.mp3"    preload="none" crossorigin="anonymous"></audio>
+    <audio id="ambient-model" src="assets/audio/ambient-museum.mp3"    preload="none" crossorigin="anonymous"></audio> -->
 
   </a-assets>
 
