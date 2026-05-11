@@ -1277,7 +1277,7 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     panel.setAttribute('position', '0 1.55 -1.75');
     panel.setAttribute('visible', 'true');
 
-    // Dark background plane
+    // Background plane (non-clickable, just visual)
     var bg = document.createElement('a-plane');
     bg.setAttribute('width',  '1.20');
     bg.setAttribute('height', '0.42');
@@ -1295,18 +1295,14 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     txt.setAttribute('font',     'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt');
     panel.appendChild(txt);
 
-    // ── START TOUR button ──
-    var startBtn = document.createElement('a-entity');
-    startBtn.id = 'skt-vr-start';
-    startBtn.setAttribute('position', '-0.24 -0.10 0.01');
-    startBtn.classList.add('clickable');
-
-    var startBg = document.createElement('a-box');
-    startBg.setAttribute('width',  '0.40');
-    startBg.setAttribute('height', '0.09');
-    startBg.setAttribute('depth',  '0.01');
-    startBg.setAttribute('material', 'color:#003828;emissive:#50ffcc;emissiveIntensity:0.22;transparent:true;opacity:0.95;shader:flat');
-    startBtn.appendChild(startBg);
+    // ── START TOUR button (clickable geometry + class) ──
+    var startBtnGeom = document.createElement('a-box');
+    startBtnGeom.setAttribute('width',  '0.40');
+    startBtnGeom.setAttribute('height', '0.09');
+    startBtnGeom.setAttribute('depth',  '0.01');
+    startBtnGeom.setAttribute('material', 'color:#003828;emissive:#50ffcc;emissiveIntensity:0.22;opacity:0.95;shader:flat');
+    startBtnGeom.setAttribute('position', '-0.24 -0.10 0.01');
+    startBtnGeom.classList.add('clickable'); // ← geometry has the class, not a wrapper entity
 
     var startLbl = document.createElement('a-text');
     startLbl.setAttribute('value',    'Start Tour');
@@ -1314,22 +1310,17 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     startLbl.setAttribute('color',    '#50ffcc');
     startLbl.setAttribute('width',    '0.36');
     startLbl.setAttribute('position', '0 0 0.015');
-    startBtn.appendChild(startLbl);
+    startBtnGeom.appendChild(startLbl);
+    panel.appendChild(startBtnGeom);
 
-    panel.appendChild(startBtn);
-
-    // ── SKIP TOUR button ──
-    var skipBtn = document.createElement('a-entity');
-    skipBtn.id = 'skt-vr-skip';
-    skipBtn.setAttribute('position', '0.24 -0.10 0.01');
-    skipBtn.classList.add('clickable');
-
-    var skipBg = document.createElement('a-box');
-    skipBg.setAttribute('width',  '0.40');
-    skipBg.setAttribute('height', '0.09');
-    skipBg.setAttribute('depth',  '0.01');
-    skipBg.setAttribute('material', 'color:#181818;emissive:#888888;emissiveIntensity:0.10;transparent:true;opacity:0.90;shader:flat');
-    skipBtn.appendChild(skipBg);
+    // ── SKIP TOUR button (clickable geometry + class) ──
+    var skipBtnGeom = document.createElement('a-box');
+    skipBtnGeom.setAttribute('width',  '0.40');
+    skipBtnGeom.setAttribute('height', '0.09');
+    skipBtnGeom.setAttribute('depth',  '0.01');
+    skipBtnGeom.setAttribute('material', 'color:#181818;emissive:#888888;emissiveIntensity:0.10;opacity:0.90;shader:flat');
+    skipBtnGeom.setAttribute('position', '0.24 -0.10 0.01');
+    skipBtnGeom.classList.add('clickable'); // ← geometry has the class, not a wrapper entity
 
     var skipLbl = document.createElement('a-text');
     skipLbl.setAttribute('value',    'Skip Tour');
@@ -1337,29 +1328,39 @@ AFRAME.registerComponent('thumbstick-locomotion', {
     skipLbl.setAttribute('color',    '#aaaaaa');
     skipLbl.setAttribute('width',    '0.36');
     skipLbl.setAttribute('position', '0 0 0.015');
-    skipBtn.appendChild(skipLbl);
-
-    panel.appendChild(skipBtn);
+    skipBtnGeom.appendChild(skipLbl);
+    panel.appendChild(skipBtnGeom);
 
     // Append to scene first — THEN attach events (entity must be in DOM for A-Frame events)
     scene.appendChild(panel);
 
-    // Use A-Frame's event system — these fire from the laser-controls raycaster
-    startBtn.addEventListener('click', _startTour);
-    skipBtn.addEventListener('click',  _skipTour);
+    // Attach click listeners directly to the geometry elements (raycaster hits these)
+    startBtnGeom.addEventListener('click', function (e) {
+      e.stopPropagation();
+      // Force AudioContext resume + retry any queued audio
+      if (window.NarrationAudioManager && window.NarrationAudioManager.retryPending) {
+        window.NarrationAudioManager.retryPending();
+      }
+      _startTour();
+    });
+
+    skipBtnGeom.addEventListener('click', function (e) {
+      e.stopPropagation();
+      _skipTour();
+    });
 
     // Visual hover feedback for VR
-    startBtn.addEventListener('mouseenter', function () {
-      startBg.setAttribute('material', 'emissiveIntensity', '0.55');
+    startBtnGeom.addEventListener('mouseenter', function () {
+      startBtnGeom.setAttribute('material', 'emissiveIntensity', '0.55');
     });
-    startBtn.addEventListener('mouseleave', function () {
-      startBg.setAttribute('material', 'emissiveIntensity', '0.22');
+    startBtnGeom.addEventListener('mouseleave', function () {
+      startBtnGeom.setAttribute('material', 'emissiveIntensity', '0.22');
     });
-    skipBtn.addEventListener('mouseenter', function () {
-      skipBg.setAttribute('material', 'emissiveIntensity', '0.30');
+    skipBtnGeom.addEventListener('mouseenter', function () {
+      skipBtnGeom.setAttribute('material', 'emissiveIntensity', '0.30');
     });
-    skipBtn.addEventListener('mouseleave', function () {
-      skipBg.setAttribute('material', 'emissiveIntensity', '0.10');
+    skipBtnGeom.addEventListener('mouseleave', function () {
+      skipBtnGeom.setAttribute('material', 'emissiveIntensity', '0.10');
     });
   }
 

@@ -222,6 +222,12 @@ window.NarrationAudioManager = (function () {
 
     isPlaying ()    { return _playing && !!_current && !_current.paused; },
     currentAudio () { return _current; },
+
+    /**
+     * Manually retry any pending (blocked) audio — call this from a VR
+     * button click handler to ensure the AudioContext is unlocked.
+     */
+    retryPending () { _retryOnUserGesture(); },
   };
 })();
 
