@@ -59,40 +59,44 @@
 /* ══════════════════════════════════════════════════════════════════════════════
   NARRATION AUDIO MANAGER  (v2 — Web Audio Buffer-based)
   ──────────────────────────────────────────────────────────────────────────────
-  • No longer calls audioElement.play() — uses AudioBufferSourceNode instead.
-  • Works in VR without a repeated user-gesture once the AudioContext is unlocked.
-  • Cross-fades between clips identically to v1.
-  • Decodes each <audio> element's src via fetch + decodeAudioData on first play.
-  • All playback is routed through a single master GainNode for fade control.
+  WHY: HTMLAudioElement.play() is permanently blocked by WebXR browsers after
+  the XR session starts, even with user gestures. The only reliable solution is
+  to decode audio into AudioBuffers and play them via AudioBufferSourceNode —
+  once the AudioContext is unlocked (one real gesture), all subsequent clips
+  play without restriction.
 
-  Usage (called by NarrationController only — API unchanged):
+  HOW IT WORKS:
+  • On first play() call, fetches the audio src and decodes it to an AudioBuffer.
+  • Decoded buffers are cached by audioEl.id — subsequent plays are instant.
+  • All output routes through a single master GainNode for smooth cross-fading.
+  • retryPending() is called by the VR unlock button to resume context + replay.
+
+  Usage (NarrationController API unchanged):
     NarrationAudioManager.play(audioElement, volume, fadeDuration)
     NarrationAudioManager.stop(fadeDuration)
     NarrationAudioManager.pause()
     NarrationAudioManager.resume(volume)
     NarrationAudioManager.isPlaying()
+    NarrationAudioManager.retryPending()
 ══════════════════════════════════════════════════════════════════════════════ */
 window.NarrationAudioManager = (function () {
-  let _ctx          = null;    // Web AudioContext (shared with THREE/A-Frame)
-  let _gainNode     = null;    // master gain — all sources connect here
-  let _buffers      = {};      // cache: audioEl.id → AudioBuffer
-  let _currentSrc   = null;    // active AudioBufferSourceNode
-  let _playing      = false;
-  let _fadeTimer    = null;    // rAF handle for active fade
-  let _pendingPlay  = null;    // { bufferKey, volume, fadeDuration } queued while decoding
+  let _ctx         = null;   // Web AudioContext — shared with THREE/A-Frame
+  let _gainNode    = null;   // master GainNode — all sources connect here
+  let _buffers     = {};     // cache: audioEl.id → AudioBuffer
+  let _currentSrc  = null;   // active AudioBufferSourceNode
+  let _playing     = false;
+  let _fadeTimer   = null;   // rAF handle for active fade
+  let _pendingPlay = null;   // { audioEl, vol, fadeDuration } — queued while decoding
 
 
-  /* ── AudioContext bootstrap ──────────────────────────────────────────────── */
+  /* ── Bootstrap AudioContext from THREE (shared with A-Frame) ───────────── */
   function _ensureCtx () {
     if (_ctx) return _ctx;
-    const threeCtx = (typeof THREE !== 'undefined' &&
-                      THREE.AudioContext && THREE.AudioContext.getContext)
+    const tc = (typeof THREE !== 'undefined' &&
+                THREE.AudioContext && THREE.AudioContext.getContext)
       ? THREE.AudioContext.getContext() : null;
-    if (!threeCtx) {
-      console.warn('[NarrationAudioManager] THREE.AudioContext not available yet.');
-      return null;
-    }
-    _ctx      = threeCtx;
+    if (!tc) return null;
+    _ctx      = tc;
     _gainNode = _ctx.createGain();
     _gainNode.gain.value = 0;
     _gainNode.connect(_ctx.destination);
@@ -100,18 +104,18 @@ window.NarrationAudioManager = (function () {
   }
 
 
-  /* ── Fade helpers (operate on the master GainNode) ──────────────────────── */
+  /* ── Fade helpers (operate on master GainNode) ─────────────────────────── */
   function _clearFade () {
     if (_fadeTimer) { cancelAnimationFrame(_fadeTimer); _fadeTimer = null; }
   }
 
   function _fadeIn (targetVol, durationMs) {
     if (!_gainNode) return;
-    const startTime = performance.now();
-    const startVol  = _gainNode.gain.value;
+    const start    = performance.now();
+    const startVol = _gainNode.gain.value;
     _clearFade();
     function step (now) {
-      const t = Math.min((now - startTime) / durationMs, 1);
+      const t = Math.min((now - start) / durationMs, 1);
       _gainNode.gain.value = startVol + (targetVol - startVol) * t;
       if (t < 1) _fadeTimer = requestAnimationFrame(step);
     }
@@ -120,198 +124,167 @@ window.NarrationAudioManager = (function () {
 
   function _fadeOut (durationMs, cb) {
     if (!_gainNode) { if (cb) cb(); return; }
-    const startTime = performance.now();
-    const startVol  = _gainNode.gain.value;
+    const start    = performance.now();
+    const startVol = _gainNode.gain.value;
     function step (now) {
-      const t = Math.min((now - startTime) / durationMs, 1);
+      const t = Math.min((now - start) / durationMs, 1);
       _gainNode.gain.value = startVol * (1 - t);
-      if (t < 1) {
-        requestAnimationFrame(step);
-      } else {
-        _gainNode.gain.value = 0;
-        if (cb) cb();
-      }
+      if (t < 1) { requestAnimationFrame(step); }
+      else { _gainNode.gain.value = 0; if (cb) cb(); }
     }
     requestAnimationFrame(step);
   }
 
 
-  /* ── Source management ───────────────────────────────────────────────────── */
-  function _stopCurrentSource () {
+  /* ── Source management ──────────────────────────────────────────────────── */
+  function _stopCurrentSrc () {
     if (_currentSrc) {
-      try { _currentSrc.stop(0); } catch (e) {}
+      try { _currentSrc.stop(0); }  catch (e) {}
       try { _currentSrc.disconnect(); } catch (e) {}
       _currentSrc = null;
     }
   }
 
 
-  /* ── Buffer decode ───────────────────────────────────────────────────────── */
-  function _decodeAndPlay (audioEl, vol, fadeDuration) {
+  /* ── Core: play a decoded buffer ────────────────────────────────────────── */
+  function _playBuffer (id, vol, fadeDuration) {
     const audioCtx = _ensureCtx();
-    if (!audioCtx) {
-      // AudioContext not ready — queue and wait
-      _pendingPlay = { bufferKey: audioEl.id, volume: vol, fadeDuration, audioEl };
-      return;
-    }
+    if (!audioCtx) { console.warn('[NAM] No AudioContext'); return; }
 
-    // Already cached
-    if (_buffers[audioEl.id]) {
-      _playBuffer(audioEl.id, vol, fadeDuration);
-      return;
-    }
+    const doStart = () => {
+      const buf = _buffers[id];
+      if (!buf) { console.warn('[NAM] Buffer missing for', id); return; }
 
-    // Fetch + decode
-    console.log('[NarrationAudioManager] Decoding:', audioEl.src);
-    fetch(audioEl.src)
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.arrayBuffer();
-      })
-      .then(arrayBuf => audioCtx.decodeAudioData(arrayBuf))
-      .then(decoded => {
-        _buffers[audioEl.id] = decoded;
-        console.log('[NarrationAudioManager] Decoded OK:', audioEl.id);
-        // If this is still the pending play, fire it
-        if (_pendingPlay && _pendingPlay.bufferKey === audioEl.id) {
-          const { volume, fadeDuration: fd } = _pendingPlay;
-          _pendingPlay = null;
-          _playBuffer(audioEl.id, volume, fd);
-        } else {
-          // play() was called again in the meantime; just cache for next time
-        }
-      })
-      .catch(err => {
-        console.error('[NarrationAudioManager] Decode error for', audioEl.src, err);
-        _pendingPlay = null;
-      });
-
-    // Mark as pending so subsequent calls don't re-fetch
-    _pendingPlay = { bufferKey: audioEl.id, volume: vol, fadeDuration, audioEl };
-  }
-
-
-  /* ── Core playback ───────────────────────────────────────────────────────── */
-  function _playBuffer (bufferKey, vol, fadeDuration) {
-    const audioCtx = _ensureCtx();
-    if (!audioCtx) return;
-
-    // Resume the context if it was suspended by WebXR
-    const doPlay = () => {
-      const buf = _buffers[bufferKey];
-      if (!buf) { console.warn('[NarrationAudioManager] Buffer missing:', bufferKey); return; }
-
-      _stopCurrentSource();
+      _stopCurrentSrc();
       _gainNode.gain.value = 0;
 
-      const src = audioCtx.createBufferSource();
-      src.buffer     = buf;
-      src.loop       = false;
+      const src    = audioCtx.createBufferSource();
+      src.buffer   = buf;
+      src.loop     = false;
       src.connect(_gainNode);
       src.start(0);
-
       _currentSrc = src;
       _playing    = true;
 
       src.onended = () => {
-        if (_currentSrc === src) {
-          _playing    = false;
-          _currentSrc = null;
-        }
+        if (_currentSrc === src) { _currentSrc = null; _playing = false; }
       };
 
       _fadeIn(vol, fadeDuration);
+      console.log('[NAM] ▶ Playing buffer:', id);
     };
 
+    // Always try to resume the context first — it may be suspended by WebXR
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume().then(doPlay).catch(doPlay);
+      audioCtx.resume().then(doStart).catch(doStart);
     } else {
-      doPlay();
+      doStart();
     }
+  }
+
+
+  /* ── Fetch + decode on first play, then cache ───────────────────────────── */
+  function _decodeAndPlay (audioEl, vol, fadeDuration) {
+    const id = audioEl.id;
+
+    // Already cached — play immediately
+    if (_buffers[id]) { _playBuffer(id, vol, fadeDuration); return; }
+
+    // Already decoding — update the pending play target
+    if (_pendingPlay && _pendingPlay.audioEl === audioEl) {
+      _pendingPlay.vol = vol; _pendingPlay.fadeDuration = fadeDuration;
+      return;
+    }
+
+    const audioCtx = _ensureCtx();
+    if (!audioCtx) {
+      // Context not ready yet — queue and hope retryPending() is called
+      _pendingPlay = { audioEl, vol, fadeDuration };
+      return;
+    }
+
+    _pendingPlay = { audioEl, vol, fadeDuration };
+    console.log('[NAM] Fetching + decoding:', audioEl.src);
+
+    fetch(audioEl.src)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+      .then(ab  => audioCtx.decodeAudioData(ab))
+      .then(buf => {
+        _buffers[id] = buf;
+        console.log('[NAM] Decoded OK:', id);
+        // Fire pending play if it's still for this clip
+        if (_pendingPlay && _pendingPlay.audioEl.id === id) {
+          const { vol: v, fadeDuration: fd } = _pendingPlay;
+          _pendingPlay = null;
+          _playBuffer(id, v, fd);
+        }
+      })
+      .catch(err => {
+        console.error('[NAM] Decode error:', audioEl.src, err);
+        _pendingPlay = null;
+      });
   }
 
 
   /* ══ Public API ════════════════════════════════════════════════════════════ */
   return {
-    /**
-     * Play a new clip via Web Audio (no HTMLMediaElement.play() call).
-     * Cross-fades out any currently playing clip first.
-     * Decodes the audio on first play and caches the buffer for subsequent calls.
-     * @param {HTMLAudioElement} audioEl  — the <audio> asset element (used for src + id)
-     * @param {number} vol               — target volume 0–1   (default 0.9)
-     * @param {number} fadeDuration      — ms for fade-in       (default 400)
-     */
+
     play (audioEl, vol = 0.9, fadeDuration = 400) {
       if (!audioEl) return;
-
-      // If something is playing, fade it out then play the new clip
+      // Cross-fade: if something is playing, fade out first
       if (_playing && _gainNode && _gainNode.gain.value > 0.01) {
-        _fadeOut(fadeDuration, () => {
-          _stopCurrentSource();
-          _decodeAndPlay(audioEl, vol, fadeDuration);
-        });
+        _fadeOut(fadeDuration, () => { _stopCurrentSrc(); _decodeAndPlay(audioEl, vol, fadeDuration); });
       } else {
-        _stopCurrentSource();
+        _stopCurrentSrc();
         _decodeAndPlay(audioEl, vol, fadeDuration);
       }
     },
 
-    /**
-     * Stop the current clip with a fade-out.
-     * @param {number} fadeDuration — ms (default 600)
-     */
     stop (fadeDuration = 600) {
       _pendingPlay = null;
       _clearFade();
       if (_playing) {
-        _fadeOut(fadeDuration, () => { _stopCurrentSource(); _playing = false; });
+        _fadeOut(fadeDuration, () => { _stopCurrentSrc(); _playing = false; });
       } else {
-        _stopCurrentSource();
-        _playing = false;
+        _stopCurrentSrc(); _playing = false;
       }
     },
 
-    /** Stop immediately (scene change / pause). */
     pause () {
-      _pendingPlay = null;
-      _clearFade();
-      _stopCurrentSource();
+      _pendingPlay = null; _clearFade(); _stopCurrentSrc();
       if (_gainNode) _gainNode.gain.value = 0;
       _playing = false;
     },
 
-    /** No-op — Web Audio sources are fire-and-forget; resume restarts the clip. */
-    resume (vol) {},
+    resume (vol) { /* fire-and-forget sources; NarrationController re-calls play() */ },
 
     isPlaying ()    { return _playing; },
-    currentAudio () { return null; },  // no longer an HTMLMediaElement
+    currentAudio () { return null; }, // no longer an HTMLMediaElement
 
     /**
-     * Manually trigger a pending play (e.g. after VR button press unlocks context).
-     * Also force-resumes the AudioContext.
+     * Called synchronously from a VR button click / gesture handler.
+     * Resumes the AudioContext and replays any pending clip.
+     * MUST be called synchronously inside the event handler to count as a gesture.
      */
     retryPending () {
       const audioCtx = _ensureCtx();
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume().then(() => {
-          if (_pendingPlay) {
-            const { bufferKey, volume, fadeDuration, audioEl } = _pendingPlay;
-            _pendingPlay = null;
-            if (_buffers[bufferKey]) {
-              _playBuffer(bufferKey, volume, fadeDuration);
-            } else if (audioEl) {
-              _decodeAndPlay(audioEl, volume, fadeDuration);
-            }
-          }
-        });
-      } else if (_pendingPlay) {
-        const { bufferKey, volume, fadeDuration, audioEl } = _pendingPlay;
+      if (!audioCtx) return;
+
+      const doRetry = () => {
+        if (!_pendingPlay) return;
+        const { audioEl, vol, fadeDuration } = _pendingPlay;
         _pendingPlay = null;
-        if (_buffers[bufferKey]) {
-          _playBuffer(bufferKey, volume, fadeDuration);
-        } else if (audioEl) {
-          _decodeAndPlay(audioEl, volume, fadeDuration);
+        if (_buffers[audioEl.id]) {
+          _playBuffer(audioEl.id, vol, fadeDuration);
+        } else {
+          _decodeAndPlay(audioEl, vol, fadeDuration);
         }
+      };
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(doRetry).catch(doRetry);
+      } else {
+        doRetry();
       }
     },
   };

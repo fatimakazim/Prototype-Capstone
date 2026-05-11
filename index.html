@@ -1104,24 +1104,32 @@ AFRAME.registerComponent('thumbstick-locomotion', {
    WebXR suspends the AudioContext on headset entry. We MUST call
    ctx.resume() inside the enter-vr handler, otherwise all Web Audio
    (narration clips + video audio) stays completely silent in the headset.
+
+   KEY INSIGHT: ctx.resume() only works when called synchronously inside
+   a real user-gesture event handler. setTimeout / Promises break the
+   gesture chain in many WebXR runtimes. The dedicated "Tap to Hear Audio"
+   VR button below is the most reliable pattern — it calls retryPending()
+   synchronously in the click handler, which is always treated as a gesture.
 ══════════════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
 
+  /* ── shared helpers exposed to other script blocks ── */
+  window._vrAudioUnlock = {};
+
   function resumeAudioContext () {
-    // A-Frame shares its AudioContext on THREE.AudioContext
-    const ctx = (typeof THREE !== 'undefined' &&
-                 THREE.AudioContext && THREE.AudioContext.getContext)
+    var ctx = (typeof THREE !== 'undefined' &&
+               THREE.AudioContext && THREE.AudioContext.getContext)
       ? THREE.AudioContext.getContext() : null;
     if (ctx && ctx.state === 'suspended') {
       ctx.resume().then(function () {
-        console.log('[VRAudio] AudioContext resumed — narration + video audio now active.');
-      });
+        console.log('[VRAudio] AudioContext resumed.');
+      }).catch(function () {});
     }
   }
+  window._vrAudioUnlock.resumeCtx = resumeAudioContext;
 
   function unmuteLiveVideos () {
-    // After entering VR, unmute whichever 360 video is currently playing
     var ids = ['#street-360-vid','#temple-360-vid','#house-360',
                '#margalla-360','#banyan-360','#mosque-360',
                '#restaurant-360','#shops-360','#neighbourhood-360',
@@ -1133,45 +1141,147 @@ AFRAME.registerComponent('thumbstick-locomotion', {
   }
 
   function retryNarration () {
-    // If a narration clip was blocked (decode pending or context was suspended),
-    // retry now that the context is running. The buffer-based manager handles this
-    // internally via retryPending().
     var mgr = window.NarrationAudioManager;
     if (mgr && mgr.retryPending) mgr.retryPending();
   }
+  window._vrAudioUnlock.retryNarration = retryNarration;
 
+  /* ── on enter-vr: resume context + retry (belt-and-suspenders) ── */
   var scene = document.querySelector('a-scene');
   if (scene) {
     scene.addEventListener('enter-vr', function () {
       resumeAudioContext();
-      // Small delay so XR session is fully established before audio ops
-      setTimeout(function () {
-        unmuteLiveVideos();
-        retryNarration();
-      }, 300);
+      setTimeout(function () { unmuteLiveVideos(); retryNarration(); }, 300);
+      // Inject the VR unlock button as soon as we enter VR
+      setTimeout(_injectVRUnlockButton, 600);
     });
 
-    // Pro-actively unlock audio on the first VR trigger press.
-    // This ensures any blocked/pending narration is retried as soon as the
-    // user presses a controller trigger, even before "Start Tour" is clicked.
+    // triggerdown also counts as a gesture in some runtimes
     scene.addEventListener('triggerdown', function () {
       resumeAudioContext();
-      // Tiny delay so the AudioContext is fully resumed before retrying
-      setTimeout(function () {
-        unmuteLiveVideos();
-        retryNarration();
-      }, 100);
+      retryNarration();
     });
   }
 
-  // Also unlock on first desktop gesture (2D mode)
-  function gestureUnlock () {
-    resumeAudioContext();
-    retryNarration();
-  }
+  /* ── desktop gesture unlock ── */
+  function gestureUnlock () { resumeAudioContext(); retryNarration(); }
   document.addEventListener('click',      gestureUnlock, { once: true });
   document.addEventListener('touchstart', gestureUnlock, { once: true, passive: true });
   document.addEventListener('keydown',    gestureUnlock, { once: true });
+
+  /* ════════════════════════════════════════════════════════════════════
+     VR AUDIO UNLOCK BUTTON
+     ─────────────────────────────────────────────────────────────────
+     A large, hard-to-miss A-Frame panel that appears in VR right after
+     the intro completes. The user shoots it with their laser pointer and
+     pulls the trigger. That click fires synchronously inside an A-Frame
+     raycaster event, which WebXR treats as a genuine user gesture —
+     allowing ctx.resume() + AudioBufferSourceNode.start() to succeed.
+
+     The button hides itself as soon as it's clicked.
+  ════════════════════════════════════════════════════════════════════ */
+  function _injectVRUnlockButton () {
+    var sc = document.querySelector('a-scene');
+    if (!sc || document.getElementById('vr-audio-unlock-btn')) return;
+
+    // Only show if we're actually in VR mode
+    if (!sc.is('vr-mode')) return;
+
+    var panel = document.createElement('a-entity');
+    panel.id  = 'vr-audio-unlock-btn';
+    // Positioned slightly above and in front of the default camera position
+    panel.setAttribute('position', '0 1.8 -1.4');
+    panel.setAttribute('visible',  'true');
+
+    /* Background plane */
+    var bg = document.createElement('a-plane');
+    bg.setAttribute('width',    '0.72');
+    bg.setAttribute('height',   '0.22');
+    bg.setAttribute('material', 'color:#001a12;opacity:0.96;transparent:true;shader:flat');
+    bg.setAttribute('side',     'double');
+
+    /* Glowing border frame */
+    var border = document.createElement('a-plane');
+    border.setAttribute('width',    '0.74');
+    border.setAttribute('height',   '0.24');
+    border.setAttribute('position', '0 0 -0.002');
+    border.setAttribute('material', 'color:#50ffcc;opacity:0.55;transparent:true;shader:flat');
+    border.setAttribute('side',     'double');
+
+    /* Label */
+    var lbl = document.createElement('a-text');
+    lbl.setAttribute('value',    '▶  Tap to Hear Audio');
+    lbl.setAttribute('align',    'center');
+    lbl.setAttribute('color',    '#50ffcc');
+    lbl.setAttribute('width',    '0.65');
+    lbl.setAttribute('position', '0 0.01 0.012');
+    lbl.setAttribute('font',     'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt');
+
+    /* Sub-label */
+    var sub = document.createElement('a-text');
+    sub.setAttribute('value',    'Point laser here + pull trigger');
+    sub.setAttribute('align',    'center');
+    sub.setAttribute('color',    'rgba(80,255,204,0.55)');
+    sub.setAttribute('width',    '0.50');
+    sub.setAttribute('position', '0 -0.055 0.012');
+    sub.setAttribute('font',     'https://cdn.aframe.io/fonts/DejaVu-sdf.fnt');
+
+    /* Invisible clickable hit-area (needs geometry for raycaster) */
+    var hit = document.createElement('a-box');
+    hit.setAttribute('width',    '0.72');
+    hit.setAttribute('height',   '0.22');
+    hit.setAttribute('depth',    '0.01');
+    hit.setAttribute('material', 'opacity:0;transparent:true');
+    hit.setAttribute('position', '0 0 0.005');
+    hit.classList.add('clickable');
+
+    panel.appendChild(border);
+    panel.appendChild(bg);
+    panel.appendChild(lbl);
+    panel.appendChild(sub);
+    panel.appendChild(hit);
+    sc.appendChild(panel);
+
+    /* ── The critical click handler ──
+       Called synchronously by A-Frame's raycaster on trigger pull.
+       ctx.resume() + retryPending() here are inside a real gesture event. */
+    hit.addEventListener('click', function (e) {
+      e.stopPropagation();
+      console.log('[VRUnlockBtn] Clicked — resuming AudioContext + retrying narration.');
+
+      // 1. Resume context synchronously in the gesture
+      var ctx2 = (typeof THREE !== 'undefined' &&
+                  THREE.AudioContext && THREE.AudioContext.getContext)
+        ? THREE.AudioContext.getContext() : null;
+      if (ctx2 && ctx2.state !== 'running') {
+        ctx2.resume().then(function () {
+          retryNarration();
+          unmuteLiveVideos();
+        });
+      } else {
+        retryNarration();
+        unmuteLiveVideos();
+      }
+
+      // 2. Hide the button
+      panel.setAttribute('visible', 'false');
+      setTimeout(function () {
+        if (panel.parentNode) panel.parentNode.removeChild(panel);
+      }, 500);
+    });
+
+    // Also auto-hide once NarrationAudioManager confirms audio is playing
+    var hideCheck = setInterval(function () {
+      var mgr = window.NarrationAudioManager;
+      if (mgr && mgr.isPlaying && mgr.isPlaying()) {
+        panel.setAttribute('visible', 'false');
+        clearInterval(hideCheck);
+      }
+    }, 500);
+  }
+
+  // Also expose so other scripts can trigger it
+  window._vrAudioUnlock.injectUnlockButton = _injectVRUnlockButton;
 })();
 
 
@@ -1227,17 +1337,14 @@ AFRAME.registerComponent('thumbstick-locomotion', {
 
   /* ── Actions ── */
   function _startTour () {
-    // Force-resume the AudioContext — required for Web Audio to work in WebXR.
-    // The buffer-based NarrationAudioManager also does this internally, but
-    // calling it here ensures the context is running before startTour() fires.
+    // Force-resume the AudioContext synchronously in this gesture handler.
+    // Required for Web Audio to work in WebXR — must happen before startTour().
     var audioCtx = (typeof THREE !== 'undefined' &&
                     THREE.AudioContext && THREE.AudioContext.getContext)
       ? THREE.AudioContext.getContext() : null;
     if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
 
     _dismiss();
-    // Tour may already be running (auto-started). If it hasn't started yet
-    // (e.g. user clicked before the 1800ms delay), start it now.
     if (window.NarrationController) {
       var state = window.NarrationController.getState();
       if (state === 'IDLE') window.NarrationController.startTour();
