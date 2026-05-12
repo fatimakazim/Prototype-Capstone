@@ -58,6 +58,7 @@
    let vrReady       = false;
    let endedHandler  = null;
    let playAttempted = false;
+   let retryPlay     = null;   // hoisted so triggerTransition can cancel it
 
 
    const vrGuardTimer = setTimeout(() => { vrReady = true; }, 3000);
@@ -200,7 +201,7 @@
          Scene1BgAudio.start();
        }).catch((err) => {
          console.warn('[intro] Autoplay blocked:', err.message);
-         const retryPlay = () => {
+         retryPlay = () => {
            if (transitioned) return;
            holoVid.loop = false;
            holoVid.play().catch(() => {});
@@ -241,6 +242,15 @@
 
      // Stop scene 1 background audio — fade matches the screen fade duration
      Scene1BgAudio.stop(700);
+
+     // Cancel any pending autoplay-retry listeners so they can't restart
+     // the audio or video after we've transitioned to the model scene.
+     if (retryPlay) {
+       document.removeEventListener('click',      retryPlay);
+       document.removeEventListener('keydown',    retryPlay);
+       document.removeEventListener('touchstart', retryPlay);
+       retryPlay = null;
+     }
 
 
      if (holoVid) {
