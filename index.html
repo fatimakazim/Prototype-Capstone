@@ -214,6 +214,10 @@
 
   </style>
 </head>
+<!-- RESTART EXPERIENCE BUTTON (Desktop) -->
+<div id="restart-btn-container">
+  <button id="restart-btn">↻ Restart Experience</button>
+</div>
 <body>
 
 <!-- LOADING -->
@@ -425,6 +429,22 @@ AFRAME.registerComponent('thumbstick-locomotion', {
            preload="auto"
            crossorigin="anonymous"></audio> -->
 
+    <!--
+      SCENE 1 BACKGROUND AUDIO
+      ──────────────────────────────────────────────────────────────────
+      Ambient audio that plays only during the intro hologram scene
+      (the testimony-hologram.mp4 video). Managed by Scene1BgAudio in
+      main.js — starts when the hologram video plays, stops (with a
+      short fade) as soon as triggerTransition() fires.
+
+      Place your audio file at:  assets/audio/scene1-ambient.mp3
+      Swap the src below to match your actual filename.
+    ── -->
+    <audio id="scene1-bg-audio"
+           src="assets/audio/scene1-ambient.mp3"
+           preload="auto"
+           crossorigin="anonymous"></audio>
+
     <!-- ── Guided Tour Narration Audio (INSIDE a-assets so A-Frame manages them) ── -->
     <audio id="audio-stop-1"  src="assets/audio/stop-01.mp3"  preload="auto" crossorigin="anonymous"></audio>
     <audio id="audio-stop-2"  src="assets/audio/stop-02.mp3"  preload="auto" crossorigin="anonymous"></audio>
@@ -484,8 +504,8 @@ AFRAME.registerComponent('thumbstick-locomotion', {
                         thetaStart:200;
                         thetaLength:140;
                         segmentsRadial:60"
-              position="0 1.55 0.5"
-              rotation="0 180 0"
+              position="0 1.55 -2"
+              rotation="0 0 0"
               material="src:#holo-vid;
                         shader:flat;
                         side:double;
@@ -494,12 +514,12 @@ AFRAME.registerComponent('thumbstick-locomotion', {
               animation__breathe="property:material.opacity;from:0.90;to:0.98;dir:alternate;dur:3000;loop:true;easing:easeInOutSine">
     </a-entity>
 
-    <a-torus position="0 2.67 0.5" rotation="90 0 0" radius="3.82"
+    <a-torus position="0 2.67 -2" rotation="90 0 0" radius="3.82"
              radius-tubular="0.014" segments-tubular="80"
              material="color:#50ffcc;emissive:#50ffcc;emissiveIntensity:3;shader:flat;transparent:true;opacity:0.7"
              animation="property:material.opacity;from:0.4;to:0.9;dir:alternate;dur:1800;loop:true;easing:easeInOutSine">
     </a-torus>
-    <a-torus position="0 0.43 0.5" rotation="90 0 0" radius="3.82"
+    <a-torus position="0 0.43 -2" rotation="90 0 0" radius="3.82"
              radius-tubular="0.014" segments-tubular="80"
              material="color:#50ffcc;emissive:#50ffcc;emissiveIntensity:3;shader:flat;transparent:true;opacity:0.7"
              animation="property:material.opacity;from:0.4;to:0.9;dir:alternate;dur:2100;loop:true;easing:easeInOutSine">

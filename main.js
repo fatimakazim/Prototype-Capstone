@@ -63,6 +63,110 @@
    const vrGuardTimer = setTimeout(() => { vrReady = true; }, 3000);
 
 
+   /* ── Scene 1 Background Audio ──────────────────────────────────────────
+      Plays ambient audio for the intro hologram scene only.
+      Uses the same muted-start autoplay strategy as the 360° scene videos
+      so it works inside WebXR on a headset without blocking autoplay.
+
+      API (also exposed on window for debugging):
+        Scene1BgAudio.start()   — called once the hologram video begins
+        Scene1BgAudio.stop(ms)  — fade out over `ms` milliseconds; defaults 600
+      ─────────────────────────────────────────────────────────────────── */
+   const Scene1BgAudio = (function () {
+     'use strict';
+
+     let _audioEl    = null;
+     let _started    = false;    // guard: play() called at most once
+     let _stopped    = false;    // guard: stop() idempotent
+     let _fadeTimer  = null;
+
+     function _ensureEl () {
+       if (_audioEl) return _audioEl;
+       _audioEl = document.querySelector('#scene1-bg-audio');
+       return _audioEl;
+     }
+
+     /* Fade-out helper — operates directly on HTMLAudioElement.volume  */
+     function _fadeOut (ms, cb) {
+       const el = _ensureEl();
+       if (!el || el.paused) { if (cb) cb(); return; }
+       const startVol = el.volume;
+       const startMs  = performance.now();
+       function step (now) {
+         const t = Math.min((now - startMs) / ms, 1);
+         el.volume = startVol * (1 - t);
+         if (t < 1) {
+           _fadeTimer = requestAnimationFrame(step);
+         } else {
+           el.pause();
+           el.currentTime = 0;
+           el.volume = startVol;   // restore so it could replay cleanly
+           if (cb) cb();
+         }
+       }
+       _fadeTimer = requestAnimationFrame(step);
+     }
+
+     function start () {
+       if (_started || _stopped) return;
+       _started = true;
+       const el = _ensureEl();
+       if (!el) {
+         console.warn('[Scene1BgAudio] #scene1-bg-audio not found in DOM.');
+         return;
+       }
+
+       el.loop   = true;
+       el.volume = 0.55;    // comfortably below narration; tune as needed
+       el.muted  = true;    // must start muted for autoplay to succeed in WebXR
+
+       const p = el.play();
+       if (p !== undefined) {
+         p.then(() => {
+           // Autoplay allowed — unmute immediately
+           el.muted  = false;
+           console.log('[Scene1BgAudio] ▶ Playing.');
+         }).catch((err) => {
+           console.warn('[Scene1BgAudio] Autoplay blocked —', err.message,
+                        '— will retry on next user gesture.');
+           // Queue a retry on the first gesture, exactly like the 360° video pattern
+           const retry = () => {
+             if (_stopped) return;
+             el.muted = false;
+             el.play().catch(() => {});
+           };
+           document.addEventListener('click',      retry, { once: true });
+           document.addEventListener('touchstart', retry, { once: true, passive: true });
+           document.addEventListener('keydown',    retry, { once: true });
+           // Also hook into the VR triggerdown path used by the rest of the project
+           if (sceneEl) {
+             sceneEl.addEventListener('triggerdown', function vrRetry () {
+               sceneEl.removeEventListener('triggerdown', vrRetry);
+               if (_stopped) return;
+               el.muted = false;
+               el.play().catch(() => {});
+             });
+           }
+         });
+       }
+     }
+
+     function stop (fadeDurationMs) {
+       if (_stopped) return;
+       _stopped = true;
+       _started = true;   // prevent any late start() after stop() is called
+       if (_fadeTimer) { cancelAnimationFrame(_fadeTimer); _fadeTimer = null; }
+       _fadeOut(fadeDurationMs != null ? fadeDurationMs : 600, () => {
+         console.log('[Scene1BgAudio] ■ Stopped.');
+       });
+     }
+
+     return { start, stop };
+   })();
+
+   window.Scene1BgAudio = Scene1BgAudio;  // expose for debugging
+
+
    function setupVideo () {
      if (!holoVid) return;
      holoVid.loop    = false;
@@ -92,12 +196,15 @@
        playAttempted = true;
        holoVid.play().then(() => {
          holoVid.loop = false;
+         // Start scene 1 background audio in sync with the hologram video
+         Scene1BgAudio.start();
        }).catch((err) => {
          console.warn('[intro] Autoplay blocked:', err.message);
          const retryPlay = () => {
            if (transitioned) return;
            holoVid.loop = false;
            holoVid.play().catch(() => {});
+           Scene1BgAudio.start();
          };
          document.addEventListener('click',      retryPlay, { once: true });
          document.addEventListener('keydown',    retryPlay, { once: true });
@@ -131,6 +238,9 @@
      }
      clearTimeout(vrGuardTimer);
      if (skipOverlay) skipOverlay.classList.add('hidden');
+
+     // Stop scene 1 background audio — fade matches the screen fade duration
+     Scene1BgAudio.stop(700);
 
 
      if (holoVid) {
@@ -1616,4 +1726,3 @@ if (returnBtn) {
 
 
 })();
-
